@@ -1,0 +1,8 @@
+.vscode/**
+.vscode-test/**
+tests/**
+dist-tests/**
+tsconfig.test.json
+*.har
+.git/**
+.github/**

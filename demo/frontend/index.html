@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acme Dashboard - Frontend Demo (TrafficGhost Powered)</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">⚡</span>
+        <div>
+          <h1>Acme Commerce Portal</h1>
+          <span class="sub">Frontend App running against TrafficGhost Local Mock Server</span>
+        </div>
+      </div>
+
+      <!-- Backend Connection Pill -->
+      <div class="backend-controls">
+        <div class="conn-badge">
+          <span class="dot live"></span>
+          <span id="backendTargetLabel">Mock API: http://localhost:4000</span>
+        </div>
+        <div class="latency-timer" id="latencyIndicator">Latency: 0ms</div>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <div class="main-layout">
+      <!-- Sidebar Navigation -->
+      <aside class="sidebar">
+        <nav class="nav-menu">
+          <button class="nav-item active" data-view="users">
+            <span class="icon">👥</span> Users
+          </button>
+          <button class="nav-item" data-view="products">
+            <span class="icon">📦</span> Products (Paginated)
+          </button>
+          <button class="nav-item" data-view="orders">
+            <span class="icon">📑</span> Orders
+          </button>
+          <button class="nav-item" data-view="graphql">
+            <span class="icon">🔮</span> GraphQL Studio
+          </button>
+          <button class="nav-item" data-view="scenarios">
+            <span class="icon">🧪</span> Scenario Tester
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="ghost-badge">
+            <span>👻</span>
+            <div>
+              <strong>TrafficGhost</strong>
+              <small>Zero-Backend Frontend Dev</small>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Content Area -->
+      <main class="content-area">
+        <!-- Error Alert Banner -->
+        <div class="error-banner" id="globalErrorBanner" style="display: none;">
+          <div class="error-text">
+            <strong id="errorStatusText">Error 500: Server Error</strong>
+            <span id="errorMessageText">Simulated backend error response</span>
+          </div>
+          <button class="btn btn-sm btn-retry" id="btnRetry">Retry Request</button>
+        </div>
+
+        <!-- 1. USERS VIEW -->
+        <section id="view-users" class="view-panel active">
+          <div class="panel-header">
+            <div>
+              <h2>Team & Users Management</h2>
+              <p>Testing <code>GET /api/users</code> and dynamic parameterized route <code>GET /api/users/:id</code></p>
+            </div>
+            <button class="btn btn-primary" id="btnReloadUsers">Refresh Users</button>
+          </div>
+
+          <!-- Dynamic ID Test Box -->
+          <div class="card-highlight">
+            <div class="highlight-header">
+              <strong>Dynamic Route Parameter Test: <code>GET /api/users/:id</code></strong>
+            </div>
+            <div class="dynamic-id-bar">
+              <button class="btn-chip" onclick="fetchUserDetail(1)">User 1 (Alice)</button>
+              <button class="btn-chip" onclick="fetchUserDetail(2)">User 2 (Bob)</button>
+              <button class="btn-chip" onclick="fetchUserDetail(3)">User 3 (Charlie)</button>
+              <button class="btn-chip btn-chip-accent" onclick="fetchUserDetail(999)">✨ User 999 (Unseen Dynamic ID)</button>
+              <div class="input-id-group">
+                <input type="number" id="inputCustomUserId" placeholder="Custom ID" value="777" />
+                <button class="btn btn-sm btn-secondary" onclick="fetchCustomUser()">Fetch ID</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- User Detail Modal/Card -->
+          <div class="detail-card" id="userDetailCard" style="display: none;">
+            <div class="detail-header">
+              <h3 id="detailUserName">User Details</h3>
+              <button class="btn-close" onclick="closeUserDetail()">✕</button>
+            </div>
+            <div class="detail-body">
+              <pre class="json-code"><code id="detailUserJson"></code></pre>
+            </div>
+          </div>
+
+          <!-- Users List Table -->
+          <div class="card">
+            <div class="skeleton-loader" id="usersSkeleton" style="display: none;">
+              <div class="skel-row"></div>
+              <div class="skel-row"></div>
+              <div class="skel-row"></div>
+            </div>
+            <div class="table-responsive" id="usersTableWrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. PRODUCTS VIEW -->
+        <section id="view-products" class="view-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Products Catalog</h2>
+              <p>Testing dynamic query pagination: <code>GET /api/products?page=1&limit=5</code></p>
+            </div>
+            <div class="pagination-controls">
+              <button class="btn btn-secondary btn-sm" id="btnPrevPage">← Prev Page</button>
+              <span class="page-indicator" id="pageIndicator">Page 1 of 2</span>
+              <button class="btn btn-secondary btn-sm" id="btnNextPage">Next Page →</button>
+            </div>
+          </div>
+
+          <div class="products-grid" id="productsGrid"></div>
+        </section>
+
+        <!-- 3. ORDERS VIEW -->
+        <section id="view-orders" class="view-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Orders & Fulfillment</h2>
+              <p>Testing <code>GET /api/orders</code></p>
+            </div>
+            <button class="btn btn-primary" id="btnReloadOrders">Refresh Orders</button>
+          </div>
+
+          <div class="card">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Total Amount</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="ordersTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 4. GRAPHQL VIEW -->
+        <section id="view-graphql" class="view-panel">
+          <div class="panel-header">
+            <div>
+              <h2>GraphQL Operations Studio</h2>
+              <p>Testing <code>POST /graphql</code> matching operations <code>GetUsers</code>, <code>GetUserById</code>, and <code>CreateUser</code></p>
+            </div>
+          </div>
+
+          <div class="graphql-layout">
+            <div class="gql-sidebar">
+              <h3>Operations</h3>
+              <button class="gql-op-btn active" onclick="runGqlQuery('GetUsers')">
+                <span class="badge query">QUERY</span> GetUsers
+              </button>
+              <button class="gql-op-btn" onclick="runGqlQuery('GetUserById', { id: '1' })">
+                <span class="badge query">QUERY</span> GetUserById ($id: "1")
+              </button>
+              <button class="gql-op-btn" onclick="runGqlQuery('GetProductCatalog')">
+                <span class="badge query">QUERY</span> GetProductCatalog
+              </button>
+              <button class="gql-op-btn" onclick="runGqlQuery('CreateUser', { name: 'Sarah Connor', email: 'sarah@skynet.ai' })">
+                <span class="badge mut">MUTATION</span> CreateUser
+              </button>
+            </div>
+
+            <div class="gql-viewer">
+              <div class="gql-code-box">
+                <h4>Response Payload</h4>
+                <pre class="json-code"><code id="gqlResponseViewer">// Click an operation to execute</code></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. SCENARIO TESTER -->
+        <section id="view-scenarios" class="view-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Scenario & Latency Stress Tester</h2>
+              <p>Verify that your UI handles slow networks, rate limits, and server crashes gracefully.</p>
+            </div>
+          </div>
+
+          <div class="scenarios-grid">
+            <div class="test-card">
+              <h3>⏱️ Latency & Loading Skeletons</h3>
+              <p>Switch TrafficGhost to <strong>Slow Network</strong> in VS Code, then click reload:</p>
+              <button class="btn btn-primary" onclick="testLatency()">Trigger Fetch & Measure Latency</button>
+              <div class="test-result" id="latencyTestResult">Latency result will appear here.</div>
+            </div>
+
+            <div class="test-card">
+              <h3>🛑 Rate Limit (429) Handling</h3>
+              <p>Switch TrafficGhost to <strong>Rate Limited</strong> in VS Code and test error toast:</p>
+              <button class="btn btn-secondary" onclick="loadUsers()">Test 429 Error Trigger</button>
+            </div>
+
+            <div class="test-card">
+              <h3>💥 Server Crash (500) Handling</h3>
+              <p>Switch TrafficGhost to <strong>Server Error</strong> in VS Code to test retry mechanism:</p>
+              <button class="btn btn-secondary" onclick="loadProducts(1)">Test 500 Error Trigger</button>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

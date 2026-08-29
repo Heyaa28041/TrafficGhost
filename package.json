@@ -1,0 +1,221 @@
+{
+  "name": "trafficghost",
+  "displayName": "TrafficGhost",
+  "description": "Transform real browser traffic and HAR recordings into realistic, dynamic local mock APIs with zero backend setup.",
+  "version": "1.0.0",
+  "publisher": "trafficghost",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other",
+    "Testing",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "mock",
+    "har",
+    "api",
+    "graphql",
+    "rest",
+    "recorder",
+    "devtools",
+    "network"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "trafficghost-sidebar",
+          "title": "TrafficGhost",
+          "icon": "media/activity-bar.svg"
+        }
+      ]
+    },
+    "views": {
+      "trafficghost-sidebar": [
+        {
+          "id": "trafficghost.statusView",
+          "name": "TrafficGhost Status"
+        },
+        {
+          "id": "trafficghost.actionsView",
+          "name": "Quick Actions"
+        },
+        {
+          "id": "trafficghost.restEndpointsView",
+          "name": "REST Endpoints"
+        },
+        {
+          "id": "trafficghost.graphqlOperationsView",
+          "name": "GraphQL Operations"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "trafficghost.initProject",
+        "title": "TrafficGhost: Initialize Project",
+        "category": "TrafficGhost",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "trafficghost.importHar",
+        "title": "TrafficGhost: Import HAR",
+        "category": "TrafficGhost",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "trafficghost.startRecording",
+        "title": "TrafficGhost: Start Recording",
+        "category": "TrafficGhost",
+        "icon": "$(record)"
+      },
+      {
+        "command": "trafficghost.stopRecording",
+        "title": "TrafficGhost: Stop Recording",
+        "category": "TrafficGhost",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "trafficghost.analyzeTraffic",
+        "title": "TrafficGhost: Analyze Traffic",
+        "category": "TrafficGhost",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "trafficghost.generateMocks",
+        "title": "TrafficGhost: Generate Mock API",
+        "category": "TrafficGhost",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "trafficghost.startServer",
+        "title": "TrafficGhost: Start Mock Server",
+        "category": "TrafficGhost",
+        "icon": "$(play)"
+      },
+      {
+        "command": "trafficghost.stopServer",
+        "title": "TrafficGhost: Stop Mock Server",
+        "category": "TrafficGhost",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "trafficghost.openDashboard",
+        "title": "TrafficGhost: Open Traffic Dashboard",
+        "category": "TrafficGhost",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "trafficghost.openEndpoint",
+        "title": "TrafficGhost: Open Endpoint",
+        "category": "TrafficGhost",
+        "icon": "$(link)"
+      },
+      {
+        "command": "trafficghost.configureScenario",
+        "title": "TrafficGhost: Configure Scenario",
+        "category": "TrafficGhost",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "trafficghost.clearRecording",
+        "title": "TrafficGhost: Clear Recording",
+        "category": "TrafficGhost",
+        "icon": "$(trash)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "trafficghost.openDashboard",
+          "when": "view == trafficghost.statusView",
+          "group": "navigation"
+        },
+        {
+          "command": "trafficghost.importHar",
+          "when": "view == trafficghost.actionsView",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "TrafficGhost",
+      "properties": {
+        "trafficghost.mockServer.port": {
+          "type": "number",
+          "default": 4000,
+          "description": "Port number for the local TrafficGhost mock server."
+        },
+        "trafficghost.recording.autoSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically save recorded traffic to project directory."
+        },
+        "trafficghost.latency.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Simulate network latency on mock API responses."
+        },
+        "trafficghost.latency.min": {
+          "type": "number",
+          "default": 100,
+          "description": "Minimum simulated latency in milliseconds."
+        },
+        "trafficghost.latency.max": {
+          "type": "number",
+          "default": 500,
+          "description": "Maximum simulated latency in milliseconds."
+        },
+        "trafficghost.redaction.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Redact sensitive request/response headers during capture."
+        },
+        "trafficghost.redaction.headers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "authorization",
+            "cookie",
+            "set-cookie",
+            "x-api-key",
+            "apikey",
+            "proxy-authorization"
+          ],
+          "description": "List of HTTP header names to redact during traffic capture."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "node --test dist-tests/**/*.test.js",
+    "test:src": "tsc -p tsconfig.test.json && node --test dist-tests/**/*.test.js",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.80.0",
+    "@types/ws": "^8.5.10",
+    "@vscode/vsce": "^3.2.1",
+    "typescript": "^5.4.5"
+  }
+}
