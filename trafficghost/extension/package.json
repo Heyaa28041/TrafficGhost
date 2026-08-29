@@ -1,0 +1,102 @@
+{
+  "name": "trafficghost",
+  "displayName": "TrafficGhost",
+  "description": "Reconstruct your local API from real traffic. Capture, mock, and stress-test your backend without leaving VS Code.",
+  "version": "1.0.0",
+  "publisher": "trafficghost",
+  "license": "Apache-2.0",
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#0d0d1a",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/trafficghost/trafficghost.git"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": ["Testing", "Other"],
+  "keywords": ["mock", "api", "har", "proxy", "testing", "frontend", "backend", "trafficghost"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "trafficghost.captureTraffic",
+        "title": "TrafficGhost: Capture Traffic",
+        "icon": "$(radio-tower)"
+      },
+      {
+        "command": "trafficghost.startMock",
+        "title": "TrafficGhost: Start Mock Backend",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "trafficghost.stopServer",
+        "title": "TrafficGhost: Stop Mock Server"
+      },
+      {
+        "command": "trafficghost.openDashboard",
+        "title": "TrafficGhost: Open Dashboard",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "trafficghost.resetProject",
+        "title": "TrafficGhost: Reset Project",
+        "icon": "$(clear-all)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "trafficghost",
+          "title": "TrafficGhost",
+          "icon": "media/activitybar.svg"
+        }
+      ]
+    },
+    "views": {
+      "trafficghost": [
+        {
+          "id": "trafficghost.sidebar",
+          "name": "TrafficGhost",
+          "type": "webview"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "TrafficGhost",
+      "properties": {
+        "trafficghost.mockPort": {
+          "type": "number",
+          "default": 4000,
+          "description": "Port for the local mock API server."
+        },
+        "trafficghost.controlPort": {
+          "type": "number",
+          "default": 4001,
+          "description": "Port for the TrafficGhost control API (internal)."
+        },
+        "trafficghost.proxyPort": {
+          "type": "number",
+          "default": 7777,
+          "description": "Port for the HTTP proxy capture server."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "~1.80.0",
+    "@vscode/vsce": "^3.0.0",
+    "typescript": "^5.7.3"
+  }
+}
