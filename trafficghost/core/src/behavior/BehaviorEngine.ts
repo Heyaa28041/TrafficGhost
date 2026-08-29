@@ -74,7 +74,7 @@ export class BehaviorEngine {
       if (config.latencyMs !== undefined) result.latencyMs = config.latencyMs;
       if (config.latencyRandom !== undefined) result.latencyRandom = config.latencyRandom;
       for (const [code, rate] of Object.entries(config.errorRates ?? {})) {
-        result.errorRates![code as keyof typeof result.errorRates] = rate as number;
+        (result.errorRates as Record<string, number>)[code] = rate as number;
       }
     }
     return result;

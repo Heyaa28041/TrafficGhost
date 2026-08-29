@@ -55,11 +55,6 @@ export class MockServer {
       reply.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
     });
 
-    // Handle preflight
-    this.app.options("*", async (_req, reply) => {
-      reply.status(204).send();
-    });
-
     // SSE endpoint for real-time request log
     this.app.get("/__trafficghost/logs/stream", async (req, reply) => {
       reply.raw.setHeader("Content-Type", "text/event-stream");
@@ -79,10 +74,16 @@ export class MockServer {
       await new Promise(() => {});
     });
 
-    // Catch-all route for mock request handling
+    // Catch-all route for mock request handling (includes OPTIONS via .all())
     this.app.all("*", async (req: FastifyRequest, reply: FastifyReply) => {
       const start = Date.now();
       const { method, url } = req;
+
+      // Handle CORS preflight
+      if (method === "OPTIONS") {
+        reply.status(204).send();
+        return;
+      }
 
       const matchResult = this.matcher.match(method, url);
 
