@@ -1,0 +1,483 @@
+[
+  {
+    "id": "c468baf4-ad1f-4d80-9c1b-7dcdf7af9686",
+    "method": "POST",
+    "path": "/api/login",
+    "isDynamic": false,
+    "responses": [
+      {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMDEiLCJuYW1lIjoiQWxpY2UgQ2hlbiIsImlhdCI6MTcxNzIzMDQwOSwiZXhwIjoxNzE3MzE2ODA5fQ.demo",
+          "user": {
+            "id": 101,
+            "name": "Alice Chen",
+            "role": "admin"
+          },
+          "expiresIn": 86400
+        },
+        "mimeType": "application/json"
+      },
+      {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": "Unauthorized",
+          "message": "Invalid credentials. Please check your username and password."
+        },
+        "mimeType": "application/json"
+      }
+    ],
+    "behavior": {
+      "latencyMs": 0,
+      "errorRates": {}
+    }
+  },
+  {
+    "id": "ee40d311-a589-4b7d-bf9e-7b81b12bd94f",
+    "method": "GET",
+    "path": "/api/orders",
+    "isDynamic": false,
+    "responses": [
+      {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "orders": [
+            {
+              "id": "ORD-001",
+              "userId": 101,
+              "status": "delivered",
+              "total": 129.98,
+              "items": [
+                {
+                  "productId": 201,
+                  "quantity": 1
+                },
+                {
+                  "productId": 202,
+                  "quantity": 1
+                }
+              ],
+              "createdAt": "2024-05-28T10:00:00Z"
+            },
+            {
+              "id": "ORD-002",
+              "userId": 102,
+              "status": "processing",
+              "total": 59.99,
+              "items": [
+                {
+                  "productId": 203,
+                  "quantity": 1
+                }
+              ],
+              "createdAt": "2024-06-01T08:30:00Z"
+            },
+            {
+              "id": "ORD-003",
+              "userId": 103,
+              "status": "shipped",
+              "total": 39.99,
+              "items": [
+                {
+                  "productId": 204,
+                  "quantity": 1
+                }
+              ],
+              "createdAt": "2024-05-31T15:45:00Z"
+            }
+          ],
+          "total": 3
+        },
+        "mimeType": "application/json"
+      },
+      {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "orders": [
+            {
+              "id": "ORD-002",
+              "userId": 102,
+              "status": "processing",
+              "total": 59.99,
+              "createdAt": "2024-06-01T08:30:00Z"
+            }
+          ],
+          "total": 1
+        },
+        "mimeType": "application/json"
+      }
+    ],
+    "behavior": {
+      "latencyMs": 0,
+      "errorRates": {}
+    }
+  },
+  {
+    "id": "9b8e85ca-7f46-42c7-853e-b6ac446858fe",
+    "method": "POST",
+    "path": "/api/orders",
+    "isDynamic": false,
+    "responses": [
+      {
+        "status": 201,
+        "headers": {
+          "content-type": "application/json",
+          "location": "/api/orders/ORD-004"
+        },
+        "body": {
+          "id": "ORD-004",
+          "userId": 101,
+          "status": "pending",
+          "total": 159.98,
+          "items": [
+            {
+              "productId": 201,
+              "quantity": 2
+            }
+          ],
+          "createdAt": "2024-06-01T12:00:13Z"
+        },
+        "mimeType": "application/json"
+      }
+    ],
+    "behavior": {
+      "latencyMs": 0,
+      "errorRates": {}
+    }
+  },
+  {
+    "id": "1169567c-8a55-4651-9f97-1b584c6541fc",
+    "method": "GET",
+    "path": "/api/products",
+    "isDynamic": false,
+    "responses": [
+      {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "products": [
+            {
+              "id": 201,
+              "name": "Wireless Keyboard",
+              "price": 79.99,
+              "stock": 145,
+              "category": "Electronics"
+            },
+            {
+              "id": 202,
+              "name": "USB-C Hub",
+              "price": 49.99,
+              "stock": 89,
+              "category": "Electronics"
+            },
+            {
+              "id": 203,
+              "name": "Ergonomic Mouse",
+              "price": 59.99,
+              "stock": 210,
+              "category": "Electronics"
+            },
+            {
+              "id": 204,
+              "name": "Monitor Stand",
+              "price": 39.99,
+              "stock": 67,
+              "category": "Furniture"
+            }
+          ],
+          "total": 24
+        },
+        "mimeType": "application/json"
+      },
+      {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "products": [
+            {
+              "id": 201,
+              "name": "Wireless Keyboard",
+              "price": 79.99,
+              "category": "Electronics"
+            },
+            {
+              "id": 202,
+              "name": "USB-C Hub",
+              "price": 49.99,
+              "category": "Electronics"
+            },
+            {
+              "id": 203,
+              "name": "Ergonomic Mouse",
+              "price": 59.99,
+              "category": "Electronics"
+            }
+          ],
+          "total": 18,
+          "page": 1
+        },
+        "mimeType": "application/json"
+      },
+      {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "products": [
+            {
+              "id": 204,
+              "name": "Monitor Stand",
+              "price": 39.99,
+              "category": "Furniture"
+            },
+            {
+              "id": 205,
+              "name": "Webcam HD",
+              "price": 89.99,
+              "category": "Electronics"
+            }
+          ],
+          "total": 18,
+          "page": 2
+        },
+        "mimeType": "application/json"
+      }
+    ],
+    "behavior": {
+      "latencyMs": 0,
+      "errorRates": {}
+    }
+  },
+  {
+    "id": "6d885d06-ea95-4d54-9f84-aa40ece38897",
+    "method": "GET",
+    "path": "/api/users",
+    "isDynamic": false,
+    "responses": [
+      {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json",
+          "x-total-count": "42"
+        },
+        "body": {
+          "users": [
+            {
+              "id": 101,
+              "name": "Alice Chen",
+              "email": "alice@example.com",
+              "role": "admin",
+              "createdAt": "2024-01-15T10:00:00Z"
+            },
+            {
+              "id": 102,
+              "name": "Bob Smith",
+              "email": "bob@example.com",
+              "role": "user",
+              "createdAt": "2024-02-20T14:30:00Z"
+            },
+            {
+              "id": 103,
+              "name": "Carol Davis",
+              "email": "carol@example.com",
+              "role": "user",
+              "createdAt": "2024-03-05T09:15:00Z"
+            }
+          ],
+          "total": 42,
+          "page": 1,
+          "pages": 14
+        },
+        "mimeType": "application/json"
+      },
+      {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "users": [
+            {
+              "id": 101,
+              "name": "Alice Chen",
+              "email": "alice@example.com",
+              "role": "admin"
+            },
+            {
+              "id": 102,
+              "name": "Bob Smith",
+              "email": "bob@example.com",
+              "role": "user"
+            },
+            {
+              "id": 103,
+              "name": "Carol Davis",
+              "email": "carol@example.com",
+              "role": "user"
+            }
+          ],
+          "total": 42,
+          "page": 1,
+          "limit": 3
+        },
+        "mimeType": "application/json"
+      },
+      {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "users": [
+            {
+              "id": 104,
+              "name": "Dan Wilson",
+              "email": "dan@example.com",
+              "role": "user"
+            },
+            {
+              "id": 105,
+              "name": "Eve Martinez",
+              "email": "eve@example.com",
+              "role": "admin"
+            },
+            {
+              "id": 106,
+              "name": "Frank Lee",
+              "email": "frank@example.com",
+              "role": "user"
+            }
+          ],
+          "total": 42,
+          "page": 2,
+          "limit": 3
+        },
+        "mimeType": "application/json"
+      }
+    ],
+    "behavior": {
+      "latencyMs": 0,
+      "errorRates": {}
+    }
+  },
+  {
+    "id": "e4e5ff6b-b0f9-498b-8d7a-1c492d332695",
+    "method": "GET",
+    "path": "/api/products/:id",
+    "isDynamic": true,
+    "responses": [
+      {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "id": 201,
+          "name": "Wireless Keyboard",
+          "price": 79.99,
+          "stock": 145,
+          "category": "Electronics",
+          "description": "Full-size wireless keyboard with 2.4GHz connectivity and 12-month battery life.",
+          "rating": 4.6,
+          "reviews": 328
+        },
+        "mimeType": "application/json"
+      },
+      {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "id": 202,
+          "name": "USB-C Hub",
+          "price": 49.99,
+          "stock": 89,
+          "category": "Electronics",
+          "description": "7-in-1 USB-C hub with HDMI, USB 3.0, SD card, and 100W PD charging.",
+          "rating": 4.4,
+          "reviews": 512
+        },
+        "mimeType": "application/json"
+      }
+    ],
+    "behavior": {
+      "latencyMs": 0,
+      "errorRates": {}
+    }
+  },
+  {
+    "id": "d3418670-e758-4fd4-b6d7-8a821b0d5614",
+    "method": "GET",
+    "path": "/api/users/:id",
+    "isDynamic": true,
+    "responses": [
+      {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "id": 101,
+          "name": "Alice Chen",
+          "email": "alice@example.com",
+          "role": "admin",
+          "phone": "+1-555-0101",
+          "department": "Engineering",
+          "createdAt": "2024-01-15T10:00:00Z",
+          "lastLogin": "2024-06-01T11:45:00Z"
+        },
+        "mimeType": "application/json"
+      },
+      {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "id": 102,
+          "name": "Bob Smith",
+          "email": "bob@example.com",
+          "role": "user",
+          "phone": "+1-555-0102",
+          "department": "Marketing",
+          "createdAt": "2024-02-20T14:30:00Z",
+          "lastLogin": "2024-05-31T16:20:00Z"
+        },
+        "mimeType": "application/json"
+      },
+      {
+        "status": 404,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "error": "Not Found",
+          "message": "User 999 does not exist"
+        },
+        "mimeType": "application/json"
+      }
+    ],
+    "behavior": {
+      "latencyMs": 0,
+      "errorRates": {}
+    }
+  }
+]

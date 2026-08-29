@@ -1,0 +1,658 @@
+[
+  {
+    "id": "4cb400da-a2f0-414a-b1a4-9e09c1810e63",
+    "method": "GET",
+    "url": "http://localhost:3000/api/users",
+    "host": "localhost",
+    "path": "/api/users",
+    "query": {},
+    "requestHeaders": {
+      "accept": "application/json",
+      "authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.demo"
+    },
+    "responseStatus": 200,
+    "responseHeaders": {
+      "content-type": "application/json",
+      "x-total-count": "42"
+    },
+    "responseBody": {
+      "users": [
+        {
+          "id": 101,
+          "name": "Alice Chen",
+          "email": "alice@example.com",
+          "role": "admin",
+          "createdAt": "2024-01-15T10:00:00Z"
+        },
+        {
+          "id": 102,
+          "name": "Bob Smith",
+          "email": "bob@example.com",
+          "role": "user",
+          "createdAt": "2024-02-20T14:30:00Z"
+        },
+        {
+          "id": 103,
+          "name": "Carol Davis",
+          "email": "carol@example.com",
+          "role": "user",
+          "createdAt": "2024-03-05T09:15:00Z"
+        }
+      ],
+      "total": 42,
+      "page": 1,
+      "pages": 14
+    },
+    "responseMimeType": "application/json",
+    "timing": {
+      "startedAt": 1717243200000,
+      "durationMs": 95
+    },
+    "source": "har"
+  },
+  {
+    "id": "f8bfdf5c-cf9c-4c59-ae34-53404a399330",
+    "method": "GET",
+    "url": "http://localhost:3000/api/users?page=1&limit=3",
+    "host": "localhost",
+    "path": "/api/users",
+    "query": {
+      "page": "1",
+      "limit": "3"
+    },
+    "requestHeaders": {
+      "accept": "application/json"
+    },
+    "responseStatus": 200,
+    "responseHeaders": {
+      "content-type": "application/json"
+    },
+    "responseBody": {
+      "users": [
+        {
+          "id": 101,
+          "name": "Alice Chen",
+          "email": "alice@example.com",
+          "role": "admin"
+        },
+        {
+          "id": 102,
+          "name": "Bob Smith",
+          "email": "bob@example.com",
+          "role": "user"
+        },
+        {
+          "id": 103,
+          "name": "Carol Davis",
+          "email": "carol@example.com",
+          "role": "user"
+        }
+      ],
+      "total": 42,
+      "page": 1,
+      "limit": 3
+    },
+    "responseMimeType": "application/json",
+    "timing": {
+      "startedAt": 1717243201000,
+      "durationMs": 72
+    },
+    "source": "har"
+  },
+  {
+    "id": "27476779-65dc-4bd6-b1b4-4561f2205334",
+    "method": "GET",
+    "url": "http://localhost:3000/api/users?page=2&limit=3",
+    "host": "localhost",
+    "path": "/api/users",
+    "query": {
+      "page": "2",
+      "limit": "3"
+    },
+    "requestHeaders": {
+      "accept": "application/json"
+    },
+    "responseStatus": 200,
+    "responseHeaders": {
+      "content-type": "application/json"
+    },
+    "responseBody": {
+      "users": [
+        {
+          "id": 104,
+          "name": "Dan Wilson",
+          "email": "dan@example.com",
+          "role": "user"
+        },
+        {
+          "id": 105,
+          "name": "Eve Martinez",
+          "email": "eve@example.com",
+          "role": "admin"
+        },
+        {
+          "id": 106,
+          "name": "Frank Lee",
+          "email": "frank@example.com",
+          "role": "user"
+        }
+      ],
+      "total": 42,
+      "page": 2,
+      "limit": 3
+    },
+    "responseMimeType": "application/json",
+    "timing": {
+      "startedAt": 1717243202000,
+      "durationMs": 68
+    },
+    "source": "har"
+  },
+  {
+    "id": "dda23184-1333-4815-8fce-d46b13e24bb6",
+    "method": "GET",
+    "url": "http://localhost:3000/api/users/101",
+    "host": "localhost",
+    "path": "/api/users/101",
+    "query": {},
+    "requestHeaders": {
+      "accept": "application/json"
+    },
+    "responseStatus": 200,
+    "responseHeaders": {
+      "content-type": "application/json"
+    },
+    "responseBody": {
+      "id": 101,
+      "name": "Alice Chen",
+      "email": "alice@example.com",
+      "role": "admin",
+      "phone": "+1-555-0101",
+      "department": "Engineering",
+      "createdAt": "2024-01-15T10:00:00Z",
+      "lastLogin": "2024-06-01T11:45:00Z"
+    },
+    "responseMimeType": "application/json",
+    "timing": {
+      "startedAt": 1717243203000,
+      "durationMs": 48
+    },
+    "source": "har"
+  },
+  {
+    "id": "54b0896c-eb2e-41d2-b9aa-b320a1f63042",
+    "method": "GET",
+    "url": "http://localhost:3000/api/users/102",
+    "host": "localhost",
+    "path": "/api/users/102",
+    "query": {},
+    "requestHeaders": {
+      "accept": "application/json"
+    },
+    "responseStatus": 200,
+    "responseHeaders": {
+      "content-type": "application/json"
+    },
+    "responseBody": {
+      "id": 102,
+      "name": "Bob Smith",
+      "email": "bob@example.com",
+      "role": "user",
+      "phone": "+1-555-0102",
+      "department": "Marketing",
+      "createdAt": "2024-02-20T14:30:00Z",
+      "lastLogin": "2024-05-31T16:20:00Z"
+    },
+    "responseMimeType": "application/json",
+    "timing": {
+      "startedAt": 1717243204000,
+      "durationMs": 52
+    },
+    "source": "har"
+  },
+  {
+    "id": "b7aa86cf-db46-49c0-905c-1c70af375500",
+    "method": "GET",
+    "url": "http://localhost:3000/api/users/999",
+    "host": "localhost",
+    "path": "/api/users/999",
+    "query": {},
+    "requestHeaders": {
+      "accept": "application/json"
+    },
+    "responseStatus": 404,
+    "responseHeaders": {
+      "content-type": "application/json"
+    },
+    "responseBody": {
+      "error": "Not Found",
+      "message": "User 999 does not exist"
+    },
+    "responseMimeType": "application/json",
+    "timing": {
+      "startedAt": 1717243205000,
+      "durationMs": 38
+    },
+    "source": "har"
+  },
+  {
+    "id": "123d7391-b175-43fc-90d8-7a81f63cf35b",
+    "method": "GET",
+    "url": "http://localhost:3000/api/products",
+    "host": "localhost",
+    "path": "/api/products",
+    "query": {},
+    "requestHeaders": {
+      "accept": "application/json"
+    },
+    "responseStatus": 200,
+    "responseHeaders": {
+      "content-type": "application/json"
+    },
+    "responseBody": {
+      "products": [
+        {
+          "id": 201,
+          "name": "Wireless Keyboard",
+          "price": 79.99,
+          "stock": 145,
+          "category": "Electronics"
+        },
+        {
+          "id": 202,
+          "name": "USB-C Hub",
+          "price": 49.99,
+          "stock": 89,
+          "category": "Electronics"
+        },
+        {
+          "id": 203,
+          "name": "Ergonomic Mouse",
+          "price": 59.99,
+          "stock": 210,
+          "category": "Electronics"
+        },
+        {
+          "id": 204,
+          "name": "Monitor Stand",
+          "price": 39.99,
+          "stock": 67,
+          "category": "Furniture"
+        }
+      ],
+      "total": 24
+    },
+    "responseMimeType": "application/json",
+    "timing": {
+      "startedAt": 1717243206000,
+      "durationMs": 61
+    },
+    "source": "har"
+  },
+  {
+    "id": "ca4846e6-9db8-4724-8dc2-93e12eba97f6",
+    "method": "GET",
+    "url": "http://localhost:3000/api/products/201",
+    "host": "localhost",
+    "path": "/api/products/201",
+    "query": {},
+    "requestHeaders": {
+      "accept": "application/json"
+    },
+    "responseStatus": 200,
+    "responseHeaders": {
+      "content-type": "application/json"
+    },
+    "responseBody": {
+      "id": 201,
+      "name": "Wireless Keyboard",
+      "price": 79.99,
+      "stock": 145,
+      "category": "Electronics",
+      "description": "Full-size wireless keyboard with 2.4GHz connectivity and 12-month battery life.",
+      "rating": 4.6,
+      "reviews": 328
+    },
+    "responseMimeType": "application/json",
+    "timing": {
+      "startedAt": 1717243207000,
+      "durationMs": 44
+    },
+    "source": "har"
+  },
+  {
+    "id": "ffb2ebdf-bd35-4e7e-b3a6-fa95a6d81d64",
+    "method": "GET",
+    "url": "http://localhost:3000/api/products/202",
+    "host": "localhost",
+    "path": "/api/products/202",
+    "query": {},
+    "requestHeaders": {
+      "accept": "application/json"
+    },
+    "responseStatus": 200,
+    "responseHeaders": {
+      "content-type": "application/json"
+    },
+    "responseBody": {
+      "id": 202,
+      "name": "USB-C Hub",
+      "price": 49.99,
+      "stock": 89,
+      "category": "Electronics",
+      "description": "7-in-1 USB-C hub with HDMI, USB 3.0, SD card, and 100W PD charging.",
+      "rating": 4.4,
+      "reviews": 512
+    },
+    "responseMimeType": "application/json",
+    "timing": {
+      "startedAt": 1717243208000,
+      "durationMs": 53
+    },
+    "source": "har"
+  },
+  {
+    "id": "dc3ab0a0-54e7-4d4b-9bdf-51a7eb54558d",
+    "method": "POST",
+    "url": "http://localhost:3000/api/login",
+    "host": "localhost",
+    "path": "/api/login",
+    "query": {},
+    "requestHeaders": {
+      "content-type": "application/json",
+      "accept": "application/json"
+    },
+    "requestBody": {
+      "username": "alice@example.com",
+      "password": "correct-password"
+    },
+    "responseStatus": 200,
+    "responseHeaders": {
+      "content-type": "application/json"
+    },
+    "responseBody": {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMDEiLCJuYW1lIjoiQWxpY2UgQ2hlbiIsImlhdCI6MTcxNzIzMDQwOSwiZXhwIjoxNzE3MzE2ODA5fQ.demo",
+      "user": {
+        "id": 101,
+        "name": "Alice Chen",
+        "role": "admin"
+      },
+      "expiresIn": 86400
+    },
+    "responseMimeType": "application/json",
+    "timing": {
+      "startedAt": 1717243209000,
+      "durationMs": 85
+    },
+    "source": "har"
+  },
+  {
+    "id": "90ecd8ed-1a8f-47bc-aaef-42a90288e23a",
+    "method": "POST",
+    "url": "http://localhost:3000/api/login",
+    "host": "localhost",
+    "path": "/api/login",
+    "query": {},
+    "requestHeaders": {
+      "content-type": "application/json"
+    },
+    "requestBody": {
+      "username": "alice@example.com",
+      "password": "wrong-password"
+    },
+    "responseStatus": 401,
+    "responseHeaders": {
+      "content-type": "application/json"
+    },
+    "responseBody": {
+      "error": "Unauthorized",
+      "message": "Invalid credentials. Please check your username and password."
+    },
+    "responseMimeType": "application/json",
+    "timing": {
+      "startedAt": 1717243210000,
+      "durationMs": 31
+    },
+    "source": "har"
+  },
+  {
+    "id": "60934041-c578-4346-bdd8-16d2214ad73c",
+    "method": "GET",
+    "url": "http://localhost:3000/api/orders",
+    "host": "localhost",
+    "path": "/api/orders",
+    "query": {},
+    "requestHeaders": {
+      "accept": "application/json",
+      "authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.demo"
+    },
+    "responseStatus": 200,
+    "responseHeaders": {
+      "content-type": "application/json"
+    },
+    "responseBody": {
+      "orders": [
+        {
+          "id": "ORD-001",
+          "userId": 101,
+          "status": "delivered",
+          "total": 129.98,
+          "items": [
+            {
+              "productId": 201,
+              "quantity": 1
+            },
+            {
+              "productId": 202,
+              "quantity": 1
+            }
+          ],
+          "createdAt": "2024-05-28T10:00:00Z"
+        },
+        {
+          "id": "ORD-002",
+          "userId": 102,
+          "status": "processing",
+          "total": 59.99,
+          "items": [
+            {
+              "productId": 203,
+              "quantity": 1
+            }
+          ],
+          "createdAt": "2024-06-01T08:30:00Z"
+        },
+        {
+          "id": "ORD-003",
+          "userId": 103,
+          "status": "shipped",
+          "total": 39.99,
+          "items": [
+            {
+              "productId": 204,
+              "quantity": 1
+            }
+          ],
+          "createdAt": "2024-05-31T15:45:00Z"
+        }
+      ],
+      "total": 3
+    },
+    "responseMimeType": "application/json",
+    "timing": {
+      "startedAt": 1717243211000,
+      "durationMs": 78
+    },
+    "source": "har"
+  },
+  {
+    "id": "509af062-3e5b-4d8e-bc8a-c894967b0017",
+    "method": "GET",
+    "url": "http://localhost:3000/api/orders?status=processing",
+    "host": "localhost",
+    "path": "/api/orders",
+    "query": {
+      "status": "processing"
+    },
+    "requestHeaders": {
+      "accept": "application/json"
+    },
+    "responseStatus": 200,
+    "responseHeaders": {
+      "content-type": "application/json"
+    },
+    "responseBody": {
+      "orders": [
+        {
+          "id": "ORD-002",
+          "userId": 102,
+          "status": "processing",
+          "total": 59.99,
+          "createdAt": "2024-06-01T08:30:00Z"
+        }
+      ],
+      "total": 1
+    },
+    "responseMimeType": "application/json",
+    "timing": {
+      "startedAt": 1717243212000,
+      "durationMs": 89
+    },
+    "source": "har"
+  },
+  {
+    "id": "22830c38-60d0-4b05-af62-56180c01d725",
+    "method": "POST",
+    "url": "http://localhost:3000/api/orders",
+    "host": "localhost",
+    "path": "/api/orders",
+    "query": {},
+    "requestHeaders": {
+      "content-type": "application/json",
+      "authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.demo"
+    },
+    "requestBody": {
+      "userId": 101,
+      "items": [
+        {
+          "productId": 201,
+          "quantity": 2
+        }
+      ]
+    },
+    "responseStatus": 201,
+    "responseHeaders": {
+      "content-type": "application/json",
+      "location": "/api/orders/ORD-004"
+    },
+    "responseBody": {
+      "id": "ORD-004",
+      "userId": 101,
+      "status": "pending",
+      "total": 159.98,
+      "items": [
+        {
+          "productId": 201,
+          "quantity": 2
+        }
+      ],
+      "createdAt": "2024-06-01T12:00:13Z"
+    },
+    "responseMimeType": "application/json",
+    "timing": {
+      "startedAt": 1717243213000,
+      "durationMs": 42
+    },
+    "source": "har"
+  },
+  {
+    "id": "7e946a49-b0a2-41a5-a577-1ef19eac3189",
+    "method": "GET",
+    "url": "http://localhost:3000/api/products?category=Electronics&page=1",
+    "host": "localhost",
+    "path": "/api/products",
+    "query": {
+      "category": "Electronics",
+      "page": "1"
+    },
+    "requestHeaders": {
+      "accept": "application/json"
+    },
+    "responseStatus": 200,
+    "responseHeaders": {
+      "content-type": "application/json"
+    },
+    "responseBody": {
+      "products": [
+        {
+          "id": 201,
+          "name": "Wireless Keyboard",
+          "price": 79.99,
+          "category": "Electronics"
+        },
+        {
+          "id": 202,
+          "name": "USB-C Hub",
+          "price": 49.99,
+          "category": "Electronics"
+        },
+        {
+          "id": 203,
+          "name": "Ergonomic Mouse",
+          "price": 59.99,
+          "category": "Electronics"
+        }
+      ],
+      "total": 18,
+      "page": 1
+    },
+    "responseMimeType": "application/json",
+    "timing": {
+      "startedAt": 1717243214000,
+      "durationMs": 35
+    },
+    "source": "har"
+  },
+  {
+    "id": "9dc7bf78-8f71-437a-9c2a-3ed11ed94e81",
+    "method": "GET",
+    "url": "http://localhost:3000/api/products?category=Electronics&page=2",
+    "host": "localhost",
+    "path": "/api/products",
+    "query": {
+      "category": "Electronics",
+      "page": "2"
+    },
+    "requestHeaders": {
+      "accept": "application/json"
+    },
+    "responseStatus": 200,
+    "responseHeaders": {
+      "content-type": "application/json"
+    },
+    "responseBody": {
+      "products": [
+        {
+          "id": 204,
+          "name": "Monitor Stand",
+          "price": 39.99,
+          "category": "Furniture"
+        },
+        {
+          "id": 205,
+          "name": "Webcam HD",
+          "price": 89.99,
+          "category": "Electronics"
+        }
+      ],
+      "total": 18,
+      "page": 2
+    },
+    "responseMimeType": "application/json",
+    "timing": {
+      "startedAt": 1717243215000,
+      "durationMs": 40
+    },
+    "source": "har"
+  }
+]
