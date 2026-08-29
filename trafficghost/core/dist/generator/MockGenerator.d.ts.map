@@ -1,0 +1,1 @@
+{"version":3,"file":"MockGenerator.d.ts","sourceRoot":"","sources":["../../src/generator/MockGenerator.ts"],"names":[],"mappings":"AAGA,OAAO,EAAE,aAAa,EAAE,cAAc,EAAE,cAAc,EAAE,MAAM,oBAAoB,CAAC;AAGnF,wBAAgB,aAAa,CAAC,SAAS,EAAE,aAAa,EAAE,GAAG,cAAc,EAAE,CAoB1E;AAED,yDAAyD;AACzD,wBAAgB,qBAAqB,CACnC,IAAI,EAAE,cAAc,EACpB,QAAQ,EAAE,OAAO,CAAC,cAAc,CAAC,GAChC,cAAc,CAYhB"}
