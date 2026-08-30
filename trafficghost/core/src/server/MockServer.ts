@@ -17,6 +17,12 @@ export class MockServer {
   private readonly sseClients = new Set<FastifyReply>();
   private running = false;
   private port = 4000;
+  private logCallback: ((entry: RequestLogEntry) => void) | null = null;
+
+  /** Register a callback invoked after every mock request is logged. */
+  onLog(cb: (entry: RequestLogEntry) => void): void {
+    this.logCallback = cb;
+  }
 
   getBehavior(): BehaviorEngine {
     return this.behavior;
@@ -143,6 +149,8 @@ export class MockServer {
     };
     this.log.unshift(entry);
     if (this.log.length > MAX_LOG_ENTRIES) this.log.pop();
+    // Notify external listeners (e.g. Exasol)
+    try { this.logCallback?.(entry); } catch { /* never block */ }
     return entry;
   }
 

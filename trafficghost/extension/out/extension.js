@@ -64,7 +64,11 @@ function activate(context) {
     const stopCmd = vscode.commands.registerCommand("trafficghost.stopServer", handleStop);
     const dashboardCmd = vscode.commands.registerCommand("trafficghost.openDashboard", () => DashboardPanel_1.DashboardPanel.createOrShow(context.extensionUri, engineClient));
     const resetCmd = vscode.commands.registerCommand("trafficghost.resetProject", handleReset);
-    context.subscriptions.push(sidebarView, captureCmd, startCmd, stopCmd, dashboardCmd, resetCmd, outputChannel);
+    context.subscriptions.push(sidebarView, captureCmd, startCmd, stopCmd, dashboardCmd, resetCmd, outputChannel, vscode.workspace.onDidChangeConfiguration(e => {
+        if (e.affectsConfiguration("trafficghost.exasol")) {
+            syncExasolSettings();
+        }
+    }));
     // ── Start engine ─────────────────────────────────────────────────────────
     startEngine(context, controlPort);
 }
@@ -113,6 +117,7 @@ function startEngine(context, controlPort) {
         if (text.includes("TRAFFICGHOST_READY:")) {
             outputChannel.appendLine("[TrafficGhost] Engine ready.");
             vscode.window.showInformationMessage("👻 TrafficGhost is ready! Click 📡 CAPTURE TRAFFIC to begin.");
+            syncExasolSettings();
         }
     });
     engineProcess.stderr?.on("data", (data) => {
@@ -130,6 +135,18 @@ function startEngine(context, controlPort) {
         }
         engineProcess = undefined;
     });
+}
+function syncExasolSettings() {
+    const cfg = vscode.workspace.getConfiguration("trafficghost.exasol");
+    const host = cfg.get("host") ?? "localhost";
+    const port = cfg.get("port") ?? 8563;
+    const user = cfg.get("user") ?? "sys";
+    const password = cfg.get("password") ?? "exasol";
+    const schema = cfg.get("schema") ?? "TRAFFICGHOST";
+    const aiApiKey = cfg.get("aiApiKey") ?? "";
+    engineClient.updateSettings({
+        exasol: { host, port, user, password, schema, aiApiKey }
+    }).catch(() => { });
 }
 function stopEngine() {
     if (!engineProcess)

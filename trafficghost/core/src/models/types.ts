@@ -80,6 +80,17 @@ export interface BehaviorConfig {
   };
 }
 
+export interface ExasolConfig {
+  host: string;      // default "localhost"
+  port: number;      // default 8563
+  user: string;      // default "sys"
+  password: string;  // default "exasol"
+  schema: string;    // default "TRAFFICGHOST"
+  aiApiKey?: string; // API key for LLM (Groq, OpenAI, etc.)
+  aiEndpoint?: string; // optional custom LLM endpoint
+  aiModel?: string;    // optional custom model name
+}
+
 export interface GlobalSettings {
   mockPort: number;
   proxyPort: number;
@@ -87,6 +98,7 @@ export interface GlobalSettings {
   defaultLatencyMs: number;
   chaosMode: boolean;
   chaosConfig?: BehaviorConfig;
+  exasol?: ExasolConfig;
 }
 
 export const DEFAULT_SETTINGS: GlobalSettings = {
@@ -95,6 +107,13 @@ export const DEFAULT_SETTINGS: GlobalSettings = {
   controlPort: 4001,
   defaultLatencyMs: 0,
   chaosMode: false,
+  exasol: {
+    host: "localhost",
+    port: 8563,
+    user: "sys",
+    password: "exasol",
+    schema: "TRAFFICGHOST",
+  },
 };
 
 export interface RequestLogEntry {

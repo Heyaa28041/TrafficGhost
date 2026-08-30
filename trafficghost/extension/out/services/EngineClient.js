@@ -124,7 +124,7 @@ class EngineClient {
     }
     async request(method, path, body) {
         return new Promise((resolve, reject) => {
-            const payload = JSON.stringify(body);
+            const payload = body !== undefined ? JSON.stringify(body) : "";
             const options = {
                 hostname: "localhost",
                 port: parseInt(this.baseUrl.split(":")[2]),
@@ -158,6 +158,22 @@ class EngineClient {
             req.write(payload);
             req.end();
         });
+    }
+    // ─── Exasol AI ────────────────────────────────────────────────────────────
+    async updateSettings(settings) {
+        return this.put("/settings", settings);
+    }
+    async getExasolStatus() {
+        return this.get("/exasol/status");
+    }
+    async aiQuery(question, apiKey) {
+        return this.post("/exasol/ai-query", { question, apiKey });
+    }
+    async syncToExasol() {
+        return this.post("/exasol/sync", {});
+    }
+    async getExasolStats() {
+        return this.get("/exasol/stats");
     }
 }
 exports.EngineClient = EngineClient;

@@ -69,7 +69,12 @@ export function activate(context: vscode.ExtensionContext): void {
     stopCmd,
     dashboardCmd,
     resetCmd,
-    outputChannel
+    outputChannel,
+    vscode.workspace.onDidChangeConfiguration(e => {
+      if (e.affectsConfiguration("trafficghost.exasol")) {
+        syncExasolSettings();
+      }
+    })
   );
 
   // ── Start engine ─────────────────────────────────────────────────────────
@@ -133,6 +138,7 @@ function startEngine(context: vscode.ExtensionContext, controlPort: number): voi
       vscode.window.showInformationMessage(
         "👻 TrafficGhost is ready! Click 📡 CAPTURE TRAFFIC to begin."
       );
+      syncExasolSettings();
     }
   });
 
@@ -157,6 +163,20 @@ function startEngine(context: vscode.ExtensionContext, controlPort: number): voi
     }
     engineProcess = undefined;
   });
+}
+
+function syncExasolSettings(): void {
+  const cfg = vscode.workspace.getConfiguration("trafficghost.exasol");
+  const host = cfg.get<string>("host") ?? "localhost";
+  const port = cfg.get<number>("port") ?? 8563;
+  const user = cfg.get<string>("user") ?? "sys";
+  const password = cfg.get<string>("password") ?? "exasol";
+  const schema = cfg.get<string>("schema") ?? "TRAFFICGHOST";
+  const aiApiKey = cfg.get<string>("aiApiKey") ?? "";
+
+  engineClient.updateSettings({
+    exasol: { host, port, user, password, schema, aiApiKey }
+  }).catch(() => {});
 }
 
 function stopEngine(): void {

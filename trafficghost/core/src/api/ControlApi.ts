@@ -11,6 +11,8 @@ import { generateMocks } from "../generator/MockGenerator.js";
 import { MockServer } from "../server/MockServer.js";
 import { ProxyCapture } from "../proxy/ProxyCapture.js";
 import { FileStorage } from "../storage/FileStorage.js";
+import { ExasolClient, DEFAULT_EXASOL_CONFIG } from "../exasol/ExasolClient.js";
+import { runAiQuery } from "../exasol/ExasolAI.js";
 import {
   TrafficRecord,
   EndpointModel,
@@ -30,6 +32,8 @@ export class ControlApi {
   private settings: GlobalSettings;
   private running = false;
   private port = 4001;
+  private exasol: ExasolClient | null = null;
+  private sessionId: string = `session-${Date.now()}`;
 
   // In-memory state (backed by storage)
   private traffic: TrafficRecord[] = [];
@@ -55,6 +59,13 @@ export class ControlApi {
     this.mocks = this.storage.loadMocks();
     const project = this.storage.loadProject();
     this.source = (project["source"] as string) ?? undefined;
+
+    // Wire up mock request log → Exasol (fire-and-forget)
+    this.mockServer.onLog((entry) => {
+      if (this.exasol?.isConnected()) {
+        void this.exasol.insertLog(entry, this.sessionId);
+      }
+    });
   }
 
   async start(port = 4001): Promise<void> {
@@ -73,6 +84,9 @@ export class ControlApi {
     await this.app.listen({ port, host: "127.0.0.1" });
     this.running = true;
     console.log(`[TrafficGhost] Control API running on http://localhost:${port}`);
+
+    // Connect to Exasol (non-blocking — fails silently if not running)
+    void this.initExasol();
   }
 
   async stop(): Promise<void> {
@@ -83,9 +97,25 @@ export class ControlApi {
     if (this.proxy.isRunning()) {
       try { await this.proxy.stop(); } catch {}
     }
+    if (this.exasol?.isConnected()) {
+      try { await this.exasol.disconnect(); } catch {}
+    }
     await this.app.close();
     this.app = null;
     this.running = false;
+  }
+
+  private async initExasol(): Promise<void> {
+    const cfg = this.settings.exasol ?? DEFAULT_EXASOL_CONFIG;
+    this.exasol = new ExasolClient(cfg);
+    try {
+      await this.exasol.connect();
+      await this.exasol.createTablesIfNotExist();
+      console.log(`[TrafficGhost] Connected to Exasol @ ${cfg.host}:${cfg.port}`);
+    } catch (e) {
+      console.log(`[TrafficGhost] Exasol not available (${(e as Error).message}) — running without analytics`);
+      this.exasol = null;
+    }
   }
 
   private registerRoutes(): void {
@@ -152,6 +182,11 @@ export class ControlApi {
 
       this.endpoints = endpoints;
       this.storage.saveEndpoints(endpoints);
+
+      // Sync endpoints to Exasol (non-blocking)
+      if (this.exasol?.isConnected()) {
+        void this.exasol.insertEndpoints(endpoints, this.sessionId);
+      }
 
       const groups: Record<string, EndpointModel[]> = {};
       for (const ep of endpoints) {
@@ -290,7 +325,87 @@ export class ControlApi {
     app.put<{ Body: Partial<GlobalSettings> }>("/settings", async (req) => {
       this.settings = { ...this.settings, ...req.body };
       this.storage.saveSettings(this.settings);
+      // If Exasol config changed, reconnect
+      if (req.body.exasol) {
+        void this.initExasol();
+      }
       return { ok: true, settings: this.settings };
+    });
+
+    // ─── Exasol AI ────────────────────────────────────────────────────────────
+
+    app.get("/exasol/status", async () => ({
+      connected: this.exasol?.isConnected() ?? false,
+      host: this.settings.exasol?.host ?? "localhost",
+      port: this.settings.exasol?.port ?? 8563,
+      schema: this.settings.exasol?.schema ?? "TRAFFICGHOST",
+      sessionId: this.sessionId,
+    }));
+
+    app.post<{ Body: { question: string; apiKey?: string } }>("/exasol/ai-query", async (req, reply) => {
+      const { question, apiKey } = req.body;
+      if (!question) return reply.status(400).send({ error: "question is required" });
+
+      const client = this.exasol;
+      if (!client) {
+        return {
+          question,
+          sql: "",
+          columns: [],
+          rows: [],
+          error: "Exasol is not connected. Run `exasol install local` then restart TrafficGhost.",
+          durationMs: 0,
+        };
+      }
+
+      const effectiveApiKey = apiKey ?? this.settings.exasol?.aiApiKey;
+      return await runAiQuery(question, client, {
+        apiKey: effectiveApiKey,
+        endpoint: this.settings.exasol?.aiEndpoint,
+        model: this.settings.exasol?.aiModel,
+      });
+    });
+
+    app.post("/exasol/sync", async () => {
+      if (!this.exasol?.isConnected()) {
+        return { ok: false, error: "Exasol not connected" };
+      }
+      let inserted = 0;
+      for (const record of this.traffic) {
+        // Convert traffic record to a log entry for bulk sync
+        const logEntry = {
+          id: record.id,
+          timestamp: record.timing?.startedAt ? new Date(record.timing.startedAt).toISOString() : new Date().toISOString(),
+          method: record.method,
+          path: record.path,
+          status: record.responseStatus,
+          durationMs: record.timing?.durationMs ?? 0,
+        };
+        await this.exasol.insertLog(logEntry as Parameters<ExasolClient['insertLog']>[0], this.sessionId);
+        inserted++;
+      }
+      if (this.endpoints.length > 0) {
+        await this.exasol.insertEndpoints(this.endpoints, this.sessionId);
+      }
+      return { ok: true, rowsInserted: inserted };
+    });
+
+    app.get("/exasol/stats", async () => {
+      if (!this.exasol?.isConnected()) {
+        return { connected: false, rows: [] };
+      }
+      try {
+        const result = await this.exasol.execute(
+          `SELECT METHOD, STATUS_CODE, COUNT(*) AS HITS, AVG(DURATION_MS) AS AVG_MS
+           FROM TRAFFICGHOST.REQUEST_LOGS
+           WHERE SESSION_ID='${this.sessionId}'
+           GROUP BY METHOD, STATUS_CODE
+           ORDER BY HITS DESC`
+        );
+        return { connected: true, columns: result.columns, rows: result.rows };
+      } catch (e) {
+        return { connected: true, error: (e as Error).message, rows: [] };
+      }
     });
   }
 }

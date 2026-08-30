@@ -145,17 +145,19 @@ export class EngineClient {
     });
   }
 
-  private async post<T>(path: string, body: unknown): Promise<T> {
+
+
+  private async post<T>(path: string, body?: unknown): Promise<T> {
     return this.request<T>("POST", path, body);
   }
 
-  private async put<T>(path: string, body: unknown): Promise<T> {
+  private async put<T>(path: string, body?: unknown): Promise<T> {
     return this.request<T>("PUT", path, body);
   }
 
-  private async request<T>(method: string, path: string, body: unknown): Promise<T> {
+  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     return new Promise((resolve, reject) => {
-      const payload = JSON.stringify(body);
+      const payload = body !== undefined ? JSON.stringify(body) : "";
       const options: http.RequestOptions = {
         hostname: "localhost",
         port: parseInt(this.baseUrl.split(":")[2]),
@@ -187,5 +189,48 @@ export class EngineClient {
       req.write(payload);
       req.end();
     });
+  }
+
+  // ─── Exasol AI ────────────────────────────────────────────────────────────
+
+  async updateSettings(settings: Record<string, unknown>): Promise<{ ok: boolean }> {
+    return this.put<{ ok: boolean }>("/settings", settings);
+  }
+
+  async getExasolStatus(): Promise<{
+    connected: boolean;
+    host: string;
+    port: number;
+    schema: string;
+    sessionId: string;
+  }> {
+    return this.get("/exasol/status");
+  }
+
+  async aiQuery(
+    question: string,
+    apiKey?: string
+  ): Promise<{
+    question: string;
+    sql: string;
+    columns: string[];
+    rows: unknown[][];
+    error?: string;
+    durationMs: number;
+  }> {
+    return this.post("/exasol/ai-query", { question, apiKey });
+  }
+
+  async syncToExasol(): Promise<{ ok: boolean; rowsInserted?: number; error?: string }> {
+    return this.post("/exasol/sync", {});
+  }
+
+  async getExasolStats(): Promise<{
+    connected: boolean;
+    columns?: string[];
+    rows?: unknown[][];
+    error?: string;
+  }> {
+    return this.get("/exasol/stats");
   }
 }
