@@ -3,69 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TrafficGhost Dashboard</title>
+  <title>TrafficGhost Developer Console</title>
   <!-- INLINE_CSS -->
 </head>
 <body class="dark-theme">
   <div class="app-container">
-    <!-- Header -->
+    
+    <!-- Top Nav / Header -->
     <header class="app-header">
       <div class="brand">
-        <span class="ghost-icon">👻</span>
+        <svg class="logo" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
         <div class="brand-text">
           <h1>TrafficGhost</h1>
-          <span class="tagline">Production Mock Engine</span>
+          <span class="tagline">Local Mock & Ghost API Engine</span>
         </div>
       </div>
 
       <div class="header-badges">
+        <div class="status-pill" id="modeBadge">
+          <span class="dot live" id="modeDot"></span>
+          <span class="status-text" id="modeText">Real Backend Mode</span>
+        </div>
         <div class="status-pill" id="serverStatusBadge">
-          <span class="dot stopped"></span>
-          <span class="status-text">Server: Stopped</span>
+          <span class="dot stopped" id="serverDot"></span>
+          <span class="status-text" id="serverText">Server: Offline</span>
         </div>
         <div class="status-pill" id="recordingStatusBadge">
-          <span class="dot idle"></span>
-          <span class="status-text">Recorder: Inactive</span>
-        </div>
-        <div class="scenario-badge" id="currentScenarioBadge">
-          <span class="scenario-label">Scenario:</span>
-          <span class="scenario-name" id="badgeScenarioName">NORMAL</span>
+          <span class="dot idle" id="recordingDot"></span>
+          <span class="status-text" id="recordingText">Recording: Inactive</span>
         </div>
       </div>
 
       <div class="header-actions">
-        <button id="btnToggleServer" class="btn btn-primary">
-          <span class="icon">▶</span> <span id="btnToggleServerText">Start Server</span>
-        </button>
-        <button id="btnImportHar" class="btn btn-secondary">
-          <span class="icon">📁</span> Import HAR
-        </button>
-        <button id="btnToggleRecord" class="btn btn-secondary">
-          <span class="icon">⏺</span> <span id="btnToggleRecordText">Record Browser</span>
-        </button>
+        <button id="btnToggleServer" class="btn btn-primary">Start Server</button>
+        <button id="btnImportHar" class="btn btn-secondary">Import HAR</button>
+        <button id="btnToggleRecord" class="btn btn-secondary">Record Session</button>
       </div>
     </header>
 
-    <!-- Nav Tabs -->
+    <!-- Navigation Tabs -->
     <nav class="tab-nav">
-      <button class="tab-btn active" data-tab="overview">
-        <span class="tab-icon">📊</span> Overview
-      </button>
-      <button class="tab-btn" data-tab="traffic">
-        <span class="tab-icon">⚡</span> Live Traffic & Captures <span class="badge-count" id="navCapturedCount">0</span>
-      </button>
-      <button class="tab-btn" data-tab="rest">
-        <span class="tab-icon">🛣️</span> REST Endpoints <span class="badge-count" id="navRestCount">0</span>
-      </button>
-      <button class="tab-btn" data-tab="graphql">
-        <span class="tab-icon">🔮</span> GraphQL Operations <span class="badge-count" id="navGqlCount">0</span>
-      </button>
-      <button class="tab-btn" data-tab="scenarios">
-        <span class="tab-icon">🎭</span> Scenarios & Latency
-      </button>
-      <button class="tab-btn" data-tab="settings">
-        <span class="tab-icon">⚙️</span> Settings & Proxy
-      </button>
+      <button class="tab-btn active" data-tab="overview">Overview</button>
+      <button class="tab-btn" data-tab="endpoints">Endpoints</button>
+      <button class="tab-btn" data-tab="sessions">Ghost Sessions</button>
+      <button class="tab-btn" data-tab="history">Replay Log</button>
+      <button class="tab-btn" data-tab="settings">Settings</button>
     </nav>
 
     <!-- Main Content Area -->
@@ -73,421 +57,322 @@
       
       <!-- 1. OVERVIEW TAB -->
       <section id="tab-overview" class="tab-pane active">
+        <div class="hero-section">
+          <h2>Turn real application traffic into runnable local mock states.</h2>
+          <p>Record backend interactions, run them in mock isolation, and auto-generate client/type integrations.</p>
+        </div>
+
         <div class="metrics-grid">
           <div class="metric-card">
-            <div class="metric-icon">📥</div>
-            <div class="metric-value" id="metricCaptured">0</div>
-            <div class="metric-label">Captured Requests</div>
+            <span class="metric-label">REST Endpoints</span>
+            <span class="metric-value" id="metricRestCount">0</span>
           </div>
           <div class="metric-card">
-            <div class="metric-icon">🛣️</div>
-            <div class="metric-value" id="metricRest">0</div>
-            <div class="metric-label">Inferred REST Endpoints</div>
+            <span class="metric-label">GraphQL Operations</span>
+            <span class="metric-value" id="metricGqlCount">0</span>
           </div>
           <div class="metric-card">
-            <div class="metric-icon">🔮</div>
-            <div class="metric-value" id="metricGql">0</div>
-            <div class="metric-label">GraphQL Operations</div>
+            <span class="metric-label">Ghost Sessions</span>
+            <span class="metric-value" id="metricSessionsCount">0</span>
           </div>
           <div class="metric-card">
-            <div class="metric-icon">🌐</div>
-            <div class="metric-value" id="metricPort">:4000</div>
-            <div class="metric-label">Local Mock Port</div>
+            <span class="metric-label">Mock Server Port</span>
+            <span class="metric-value" id="metricPort">:4000</span>
           </div>
         </div>
 
-        <div class="overview-grid">
-          <!-- Left: Quick Scenario Switcher -->
-          <div class="card">
-            <div class="card-header">
-              <h2>Quick Scenario Simulation</h2>
-              <span class="card-hint">Switch mock behavior on the fly</span>
-            </div>
-            <div class="card-body">
-              <div class="scenario-buttons-grid">
-                <button class="scenario-select-btn active" data-scenario="normal">
-                  <div class="scenario-icon">🟢</div>
-                  <div class="scenario-info">
-                    <strong>Normal</strong>
-                    <span>200/201 Success responses</span>
-                  </div>
-                </button>
-                <button class="scenario-select-btn" data-scenario="slow-network">
-                  <div class="scenario-icon">⏳</div>
-                  <div class="scenario-info">
-                    <strong>Slow Network</strong>
-                    <span>500ms – 1500ms Latency delay</span>
-                  </div>
-                </button>
-                <button class="scenario-select-btn" data-scenario="rate-limited">
-                  <div class="scenario-icon">🛑</div>
-                  <div class="scenario-info">
-                    <strong>Rate Limited</strong>
-                    <span>429 Too Many Requests</span>
-                  </div>
-                </button>
-                <button class="scenario-select-btn" data-scenario="server-error">
-                  <div class="scenario-icon">💥</div>
-                  <div class="scenario-info">
-                    <strong>Server Error</strong>
-                    <span>500 Internal Server Error</span>
-                  </div>
-                </button>
-                <button class="scenario-select-btn" data-scenario="not-found">
-                  <div class="scenario-icon">🔍</div>
-                  <div class="scenario-info">
-                    <strong>Not Found</strong>
-                    <span>404 Resource Missing</span>
-                  </div>
-                </button>
-                <button class="scenario-select-btn" data-scenario="unauthorized">
-                  <div class="scenario-icon">🔒</div>
-                  <div class="scenario-info">
-                    <strong>Unauthorized</strong>
-                    <span>401 Auth Required</span>
-                  </div>
-                </button>
-                <button class="scenario-select-btn" data-scenario="empty-response">
-                  <div class="scenario-icon">📭</div>
-                  <div class="scenario-info">
-                    <strong>Empty Response</strong>
-                    <span>200 with empty list/object</span>
-                  </div>
-                </button>
+        <div class="info-layout" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px;">
+          <!-- Panel: API Surface & Coverage -->
+          <div class="panel">
+            <h3>API Surface & Coverage</h3>
+            <div class="panel-body">
+              <div class="coverage-stats" style="margin-bottom: 12px;">
+                <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);" id="covPercent">0%</div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                  <span id="covIntegrated">0</span> of <span id="covTotal">0</span> endpoints integrated
+                </div>
+              </div>
+              <div class="progress-bar-container" style="background-color: var(--border-color); height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 16px;">
+                <div id="covBar" style="background-color: var(--primary); height: 100%; width: 0%;"></div>
+              </div>
+              <div id="sensitiveDataAlert" class="warning-banner" style="display:none; padding: 8px 12px; border-radius: 4px; background-color: rgba(210, 153, 34, 0.1); border: 1px solid var(--warning); color: var(--warning); font-size: 12px;">
+                ⚠️ Sensitive data detected in traffic logs and automatically redacted.
               </div>
             </div>
           </div>
 
-          <!-- Right: Frontend Setup & Quick Instructions -->
-          <div class="card">
-            <div class="card-header">
-              <h2>Frontend Integration</h2>
-              <span class="framework-tag" id="detectedFrameworkTag">Vite / React</span>
-            </div>
-            <div class="card-body">
-              <p class="guide-text">
-                Point your frontend API client to the TrafficGhost mock server:
-              </p>
-              <div class="code-block-wrapper">
-                <pre class="code-block"><code id="frontendEnvSnippet"># .env.local
-VITE_API_URL=http://localhost:4000
-API_BASE_URL=http://localhost:4000</code></pre>
-                <button class="btn-copy" id="btnCopyEnv">Copy</button>
+          <!-- Panel: Active Schema Status -->
+          <div class="panel">
+            <h3>Active Schema Status</h3>
+            <div class="panel-body">
+              <p id="schemaStatusText">No API routes mapped yet. Import a HAR or start recording.</p>
+              <div class="btn-group" style="margin-top: 12px;">
+                <button id="btnInitOverview" class="btn btn-secondary">Initialize Project Structure</button>
               </div>
+            </div>
+          </div>
 
-              <div class="quick-actions-box">
-                <h3>Workflow Steps:</h3>
-                <ol class="steps-list">
-                  <li><strong>1. Import HAR or Record:</strong> Capture real staging/production network traffic.</li>
-                  <li><strong>2. Auto-Inference:</strong> Dynamic routes (e.g. <code>/api/users/:id</code>) and pagination are automatically discovered.</li>
-                  <li><strong>3. Start Mock Server:</strong> Run local server on <code>http://localhost:4000</code>.</li>
-                  <li><strong>4. Develop Unblocked:</strong> Test dynamic IDs, pagination, and error scenarios seamlessly!</li>
-                </ol>
+          <!-- Panel: Integration Gaps -->
+          <div class="panel" style="grid-column: span 2;">
+            <h3>Potential Integration Gaps</h3>
+            <div class="panel-body">
+              <div id="overviewIntegrationGaps" class="gaps-list">
+                <p style="color: var(--text-muted); font-size: 13px;">No integration gaps detected. All API endpoints mapped successfully.</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- 2. LIVE TRAFFIC TAB -->
-      <section id="tab-traffic" class="tab-pane">
-        <div class="split-view">
-          <!-- Left Table -->
-          <div class="traffic-list-pane">
-            <div class="pane-toolbar">
-              <input type="text" id="trafficSearchInput" class="input-search" placeholder="Filter requests by URL or method..." />
-              <button id="btnClearTraffic" class="btn btn-sm btn-ghost">Clear</button>
+      <!-- 2. ENDPOINTS EXPLORER -->
+      <section id="tab-endpoints" class="tab-pane">
+        <div class="two-column-layout">
+          
+          <!-- Left: Endpoints Table -->
+          <div class="list-column">
+            <div class="filter-bar">
+              <input type="text" id="endpointSearch" placeholder="Search paths, methods..." class="input-search">
             </div>
-            <div class="traffic-table-container">
-              <table class="traffic-table" id="trafficTable">
+            
+            <div class="endpoints-list-wrapper">
+              <table class="endpoints-table">
                 <thead>
                   <tr>
                     <th>Method</th>
-                    <th>Path / URL</th>
-                    <th>Status</th>
-                    <th>Time</th>
+                    <th>Path</th>
+                    <th>Count</th>
                   </tr>
                 </thead>
-                <tbody id="trafficTableBody">
-                  <tr class="empty-row"><td colspan="4">No traffic captured yet. Import a HAR or Start Recording.</td></tr>
+                <tbody id="endpointsTableBody">
+                  <!-- Generated dynamically -->
                 </tbody>
               </table>
+              <div id="endpointsEmptyState" class="empty-state">
+                <p>No endpoints detected. Import a HAR capture or record some traffic.</p>
+              </div>
             </div>
           </div>
 
-          <!-- Right Inspector Drawer -->
-          <div class="inspector-pane" id="trafficInspector">
-            <div class="inspector-empty" id="inspectorEmptyState">
-              <span>Select a request to inspect headers, parameters, and payloads</span>
+          <!-- Right: Endpoint Detail Inspector -->
+          <div class="detail-column" id="endpointInspector">
+            <div id="inspectorEmptyState" class="empty-state">
+              <p>Select an endpoint to inspect contract, timings, and code generation options.</p>
             </div>
-            <div class="inspector-content" id="inspectorContent" style="display: none;">
+            
+            <div id="inspectorContent" style="display: none;">
               <div class="inspector-header">
-                <div class="inspector-title">
-                  <span class="method-badge" id="inspMethod">GET</span>
-                  <span class="insp-path" id="inspPath">/api/users</span>
-                </div>
-                <div class="insp-status-badge" id="inspStatus">200 OK</div>
+                <span class="badge" id="inspMethod">GET</span>
+                <span class="path-title" id="inspPath">/api/users</span>
+              </div>
+              
+              <div class="inspector-subtabs">
+                <button class="sub-tab-btn active" data-subtab="overview">Overview</button>
+                <button class="sub-tab-btn" data-subtab="contract">Contract</button>
+                <button class="sub-tab-btn" data-subtab="usage">Frontend Usage</button>
+                <button class="sub-tab-btn" data-subtab="integrate">Integration</button>
+                <button class="sub-tab-btn" data-subtab="resilience">Resilience</button>
+                <button class="sub-tab-btn" data-subtab="performance">Performance</button>
+                <button class="sub-tab-btn" data-subtab="replay">Replay</button>
               </div>
 
-              <div class="sub-tabs">
-                <button class="sub-tab-btn active" data-subtab="headers">Headers</button>
-                <button class="sub-tab-btn" data-subtab="params">Query & Params</button>
-                <button class="sub-tab-btn" data-subtab="req-body">Request Body</button>
-                <button class="sub-tab-btn" data-subtab="res-body">Response Body</button>
-                <button class="sub-tab-btn" data-subtab="timing">Timing</button>
-              </div>
-
-              <div class="sub-tab-content">
-                <div id="subtab-headers" class="subtab-pane active">
-                  <h4>Request Headers</h4>
-                  <div class="key-value-list" id="inspReqHeaders"></div>
-                  <h4 style="margin-top: 14px;">Response Headers</h4>
-                  <div class="key-value-list" id="inspResHeaders"></div>
+              <!-- Inspector Sub-Panes -->
+              <div class="inspector-panes">
+                
+                <!-- Subtab: Overview -->
+                <div class="subtab-pane active" id="subtab-overview">
+                  <div class="meta-item">
+                    <span class="meta-label">Total Requests Captured</span>
+                    <span class="meta-val" id="inspReqCount">0</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-label">Default Response Status</span>
+                    <span class="meta-val" id="inspStatus">200</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-label">Path Parameters</span>
+                    <span class="meta-val" id="inspPathParams">None</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-label">Query Parameters</span>
+                    <span class="meta-val" id="inspQueryParams">None</span>
+                  </div>
                 </div>
 
-                <div id="subtab-params" class="subtab-pane">
-                  <h4>Query Parameters</h4>
-                  <div class="key-value-list" id="inspQueryParams"></div>
+                <!-- Subtab: Contract -->
+                <div class="subtab-pane" id="subtab-contract">
+                  <h4>Response Payload Preview</h4>
+                  <pre><code id="inspResponseBody" class="code-block">{}</code></pre>
                 </div>
 
-                <div id="subtab-req-body" class="subtab-pane">
-                  <pre class="json-viewer"><code id="inspReqBodyCode">null</code></pre>
+                <!-- Subtab: Frontend Usage -->
+                <div class="subtab-pane" id="subtab-usage">
+                  <h4>Detected Frontend References</h4>
+                  <div id="inspUsageList" class="usage-list">
+                    <!-- Loaded dynamically -->
+                  </div>
                 </div>
 
-                <div id="subtab-res-body" class="subtab-pane">
-                  <pre class="json-viewer"><code id="inspResBodyCode">{}</code></pre>
+                <!-- Subtab: Integration -->
+                <div class="subtab-pane" id="subtab-integrate">
+                  <div id="integrationGapBanner" class="warning-banner" style="display:none; margin-bottom: 12px; padding: 10px; border-radius: 4px; background-color: var(--warning-bg); color: var(--warning);">
+                    ⚠️ Potential integration gap - No usages detected in workspace.
+                  </div>
+                  
+                  <h4>Where should this API go?</h4>
+                  <div id="integrationAdviceList" class="advice-list" style="margin-bottom: 16px;">
+                    <!-- Loaded dynamically -->
+                  </div>
+
+                  <div class="gen-buttons" style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary" id="btnInsertPlaceholder">Insert API Placeholder</button>
+                    <button class="btn btn-primary" id="btnGenerateIntegration">Generate API Integration</button>
+                  </div>
                 </div>
 
-                <div id="subtab-timing" class="subtab-pane">
-                  <div class="timing-breakdown" id="inspTimingBreakdown"></div>
+                <!-- Subtab: Resilience -->
+                <div class="subtab-pane" id="subtab-resilience">
+                  <p class="section-desc">Run simulated failure and network latency tests to evaluate client code.</p>
+                  
+                  <div class="resilience-form" style="margin-bottom: 16px;">
+                    <div class="form-group">
+                      <label>Inject Custom Status Code</label>
+                      <select id="inspInjectStatus" class="select-box">
+                        <option value="200">200 OK (Normal)</option>
+                        <option value="401">401 Unauthorized</option>
+                        <option value="404">404 Not Found</option>
+                        <option value="429">429 Too Many Requests</option>
+                        <option value="500">500 Server Error</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>Simulated Network Latency (ms)</label>
+                      <input type="number" id="inspInjectLatency" placeholder="e.g. 500" class="input-text">
+                    </div>
+                    <button class="btn btn-primary" id="btnApplyResilience">Apply Custom Behavior</button>
+                  </div>
+
+                  <h4>Resilience Check</h4>
+                  <div id="resilienceReportList" class="resilience-report" style="margin-bottom: 16px;">
+                    <!-- Loaded dynamically -->
+                  </div>
+
+                  <button class="btn btn-secondary" id="btnGenResilienceTest">Generate Resilience Test</button>
                 </div>
+
+                <!-- Subtab: Performance -->
+                <div class="subtab-pane" id="subtab-performance">
+                  <h4>Captured Timing Statistics</h4>
+                  <div class="performance-stats-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
+                    <div class="meta-item">
+                      <span class="meta-label">Average Latency</span>
+                      <span class="meta-val" id="perfAvgLatency">Insufficient traffic data</span>
+                    </div>
+                    <div class="meta-item">
+                      <span class="meta-label">Min Latency</span>
+                      <span class="meta-val" id="perfMinLatency">-</span>
+                    </div>
+                    <div class="meta-item">
+                      <span class="meta-label">Max Latency</span>
+                      <span class="meta-val" id="perfMaxLatency">-</span>
+                    </div>
+                    <div class="meta-item">
+                      <span class="meta-label">Sample Count</span>
+                      <span class="meta-val" id="perfSampleCount">0</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Subtab: Replay -->
+                <div class="subtab-pane" id="subtab-replay">
+                  <p class="section-desc">Replay this endpoint request directly against the target mockup backend.</p>
+                  <button class="btn btn-primary" id="btnReplayEndpoint">Replay Request</button>
+                </div>
+
               </div>
             </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 3. GHOST SESSIONS -->
+      <section id="tab-sessions" class="tab-pane">
+        <div class="sessions-layout">
+          
+          <div class="sessions-header">
+            <h2>Saved Ghost Sessions</h2>
+            <button id="btnCreateGhostSession" class="btn btn-primary">Record New Session</button>
+          </div>
+
+          <div class="sessions-grid" id="sessionsGrid">
+            <!-- Populated dynamically -->
+          </div>
+
+          <div id="sessionsEmptyState" class="empty-state">
+            <p>No Ghost Sessions saved yet. Record a workflow to mock it locally.</p>
           </div>
         </div>
       </section>
 
-      <!-- 3. REST ENDPOINTS TAB -->
-      <section id="tab-rest" class="tab-pane">
-        <div class="split-view">
-          <div class="endpoints-list-pane">
-            <div class="pane-toolbar">
-              <input type="text" id="restSearchInput" class="input-search" placeholder="Search REST routes (e.g. /api/users)..." />
-            </div>
-            <div class="endpoints-list" id="restEndpointsList">
-              <div class="empty-state">No REST endpoints generated yet.</div>
-            </div>
-          </div>
-
-          <div class="endpoint-editor-pane" id="restEditorPane">
-            <div class="inspector-empty" id="restEditorEmptyState">
-              <span>Select an endpoint to inspect dynamic route parameters, pagination, and mock responses.</span>
-            </div>
-            <div class="editor-content" id="restEditorContent" style="display: none;">
-              <div class="editor-header">
-                <div class="route-title">
-                  <span class="method-badge method-get" id="editRestMethod">GET</span>
-                  <input type="text" id="editRestPath" class="input-route" readonly />
-                </div>
-              </div>
-
-              <!-- Route Parameters Badge Box -->
-              <div class="params-box" id="editRestParamsBox">
-                <h4>Dynamic Path Parameters</h4>
-                <div class="param-tags" id="editRestParamTags"></div>
-              </div>
-
-              <!-- Pagination Box -->
-              <div class="pagination-box" id="editRestPaginationBox">
-                <h4>Dynamic Pagination</h4>
-                <div class="pagination-details" id="editRestPaginationDetails"></div>
-              </div>
-
-              <!-- Behavior / Scenario Override -->
-              <div class="behavior-box">
-                <h4>Endpoint Behavior & Latency Override</h4>
-                <div class="form-row">
-                  <label>Active Scenario:</label>
-                  <select id="editRestScenarioSelect" class="form-select">
-                    <option value="default">Use Global Scenario</option>
-                    <option value="normal">Normal (200)</option>
-                    <option value="slow-network">Slow Network (Latency)</option>
-                    <option value="rate-limited">Rate Limited (429)</option>
-                    <option value="server-error">Server Error (500)</option>
-                    <option value="not-found">Not Found (404)</option>
-                    <option value="unauthorized">Unauthorized (401)</option>
-                    <option value="empty-response">Empty Response</option>
-                  </select>
-                </div>
-                <div class="form-row">
-                  <label>Error Rate Probability:</label>
-                  <input type="range" id="editRestErrorRate" min="0" max="100" value="0" class="form-range" />
-                  <span id="editRestErrorRateVal">0%</span>
-                </div>
-              </div>
-
-              <!-- Response Payload Editor -->
-              <div class="payload-box">
-                <h4>Mock Response JSON</h4>
-                <textarea id="editRestBodyText" class="json-textarea" spellcheck="false" rows="12"></textarea>
-                <div class="editor-actions">
-                  <button id="btnSaveRestEndpoint" class="btn btn-primary btn-sm">Save Mock Response</button>
-                </div>
-              </div>
-            </div>
+      <!-- 4. REPLAY LOG -->
+      <section id="tab-history" class="tab-pane">
+        <div class="history-header">
+          <h2>Server Replay Log</h2>
+          <button id="btnClearHistory" class="btn btn-secondary">Clear Logs</button>
+        </div>
+        
+        <div class="history-table-wrapper">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Method</th>
+                <th>Path</th>
+                <th>Status</th>
+                <th>Latency</th>
+                <th>Scenario</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+          <div id="historyEmptyState" class="empty-state">
+            <p>No local mock server request activity logged yet.</p>
           </div>
         </div>
       </section>
 
-      <!-- 4. GRAPHQL OPERATIONS TAB -->
-      <section id="tab-graphql" class="tab-pane">
-        <div class="split-view">
-          <div class="endpoints-list-pane">
-            <div class="pane-toolbar">
-              <input type="text" id="gqlSearchInput" class="input-search" placeholder="Search GraphQL operations..." />
-            </div>
-            <div class="endpoints-list" id="gqlOperationsList">
-              <div class="empty-state">No GraphQL operations detected.</div>
-            </div>
-          </div>
-
-          <div class="endpoint-editor-pane" id="gqlEditorPane">
-            <div class="inspector-empty" id="gqlEditorEmptyState">
-              <span>Select a GraphQL operation to view query, variables, and response.</span>
-            </div>
-            <div class="editor-content" id="gqlEditorContent" style="display: none;">
-              <div class="editor-header">
-                <div class="route-title">
-                  <span class="method-badge method-gql" id="editGqlType">QUERY</span>
-                  <strong id="editGqlOpName" style="font-size: 16px; margin-left: 8px;">GetUsers</strong>
-                </div>
-              </div>
-
-              <div class="query-box">
-                <h4>GraphQL Query</h4>
-                <pre class="code-block"><code id="editGqlQueryText"></code></pre>
-              </div>
-
-              <div class="payload-box">
-                <h4>Mock Response JSON</h4>
-                <textarea id="editGqlBodyText" class="json-textarea" spellcheck="false" rows="12"></textarea>
-                <div class="editor-actions">
-                  <button id="btnSaveGqlEndpoint" class="btn btn-primary btn-sm">Save GraphQL Response</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 5. SCENARIOS TAB -->
-      <section id="tab-scenarios" class="tab-pane">
-        <div class="settings-container">
-          <div class="card">
-            <div class="card-header">
-              <h2>Global Scenario Engine</h2>
-              <span class="card-hint">Test edge cases without modifying backend code</span>
-            </div>
-            <div class="card-body">
-              <div class="scenario-cards-list">
-                <div class="scenario-card" data-scen="normal">
-                  <div class="scen-radio"><input type="radio" name="globalScenRadio" value="normal" checked /></div>
-                  <div class="scen-content">
-                    <h3>Normal</h3>
-                    <p>Returns authentic captured 200/201 payloads with realistic fast latency.</p>
-                  </div>
-                </div>
-                <div class="scenario-card" data-scen="slow-network">
-                  <div class="scen-radio"><input type="radio" name="globalScenRadio" value="slow-network" /></div>
-                  <div class="scen-content">
-                    <h3>Slow Network</h3>
-                    <p>Deliberately introduces 500ms – 1500ms latency to test skeletons, loaders, and race conditions.</p>
-                  </div>
-                </div>
-                <div class="scenario-card" data-scen="rate-limited">
-                  <div class="scen-radio"><input type="radio" name="globalScenRadio" value="rate-limited" /></div>
-                  <div class="scen-content">
-                    <h3>Rate Limited (429)</h3>
-                    <p>Returns HTTP 429 Too Many Requests with <code>Retry-After: 30</code> header.</p>
-                  </div>
-                </div>
-                <div class="scenario-card" data-scen="server-error">
-                  <div class="scen-radio"><input type="radio" name="globalScenRadio" value="server-error" /></div>
-                  <div class="scen-content">
-                    <h3>Server Error (500)</h3>
-                    <p>Simulates backend crash or unhandled exception with HTTP 500 Internal Server Error.</p>
-                  </div>
-                </div>
-                <div class="scenario-card" data-scen="not-found">
-                  <div class="scen-radio"><input type="radio" name="globalScenRadio" value="not-found" /></div>
-                  <div class="scen-content">
-                    <h3>Not Found (404)</h3>
-                    <p>Returns HTTP 404 Not Found for testing missing entity states.</p>
-                  </div>
-                </div>
-                <div class="scenario-card" data-scen="unauthorized">
-                  <div class="scen-radio"><input type="radio" name="globalScenRadio" value="unauthorized" /></div>
-                  <div class="scen-content">
-                    <h3>Unauthorized (401)</h3>
-                    <p>Returns HTTP 401 Unauthorized for testing session expiry and login redirects.</p>
-                  </div>
-                </div>
-                <div class="scenario-card" data-scen="empty-response">
-                  <div class="scen-radio"><input type="radio" name="globalScenRadio" value="empty-response" /></div>
-                  <div class="scen-content">
-                    <h3>Empty Response</h3>
-                    <p>Returns HTTP 200 with empty list <code>[]</code> or empty object <code>{}</code> to test empty UI states.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="custom-latency-section">
-                <h3>Custom Latency Simulation</h3>
-                <div class="form-row-check">
-                  <input type="checkbox" id="checkEnableLatency" />
-                  <label for="checkEnableLatency"><strong>Enable Custom Latency Injection</strong></label>
-                </div>
-                <div class="form-row-inline">
-                  <div>
-                    <label>Min Latency (ms):</label>
-                    <input type="number" id="inputLatencyMin" class="form-input-sm" value="100" min="0" max="10000" />
-                  </div>
-                  <div>
-                    <label>Max Latency (ms):</label>
-                    <input type="number" id="inputLatencyMax" class="form-input-sm" value="500" min="0" max="10000" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 6. SETTINGS TAB -->
+      <!-- 5. SETTINGS -->
       <section id="tab-settings" class="tab-pane">
-        <div class="settings-container">
-          <div class="card">
-            <div class="card-header">
-              <h2>TrafficGhost Configuration</h2>
-              <span class="card-hint">Manage local mock server and privacy redaction</span>
-            </div>
-            <div class="card-body">
-              <div class="form-group">
-                <label>Mock Server Port:</label>
-                <input type="number" id="inputServerPort" class="form-input" value="4000" />
-                <span class="form-hint">Default is 4000 (accessible via http://localhost:4000)</span>
-              </div>
+        <div class="settings-form">
+          <h2>Configuration</h2>
+          
+          <div class="form-group">
+            <label>Mock Server Port</label>
+            <input type="number" id="settingPort" class="input-text" value="4000">
+          </div>
 
-              <div class="form-group">
-                <label>Sensitive Header Redaction:</label>
-                <div class="tags-container" id="redactionTags"></div>
-                <span class="form-hint">These headers are redacted during HAR import and browser recording to prevent credential leaks.</span>
-              </div>
+          <div class="form-group">
+            <label>Global Default Scenario</label>
+            <select id="settingGlobalScenario" class="select-box">
+              <option value="normal">Normal Operation</option>
+              <option value="slow-network">Simulate Slow Network</option>
+              <option value="rate-limited">Simulate 429 Rate Limiting</option>
+              <option value="server-error">Simulate 500 Server Errors</option>
+              <option value="empty-response">Return Empty Payloads</option>
+            </select>
+          </div>
 
-              <div class="form-group">
-                <button id="btnSaveConfig" class="btn btn-primary">Save Settings</button>
-              </div>
-            </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="settingLatencyEnabled">
+              Enable Random Simulated Latency
+            </label>
+          </div>
+
+          <div class="form-group">
+            <button id="btnSaveSettings" class="btn btn-primary">Save Settings</button>
           </div>
         </div>
       </section>

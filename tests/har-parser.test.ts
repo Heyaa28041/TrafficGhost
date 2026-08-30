@@ -15,14 +15,14 @@ function getSampleHarPath(): string {
 }
 
 describe('HAR Parser & Traffic Normalizer', () => {
-  it('should parse valid HAR file with 47 entries and normalize CapturedRequests', () => {
+  it('should parse valid HAR file with 52 entries and normalize CapturedRequests', () => {
     const harPath = getSampleHarPath();
     assert.strictEqual(fs.existsSync(harPath), true, `Sample HAR file must exist at ${harPath}`);
 
     const raw = fs.readFileSync(harPath, 'utf-8');
     const requests = HarParser.parse(raw);
 
-    assert.strictEqual(requests.length, 47, 'Should parse all 47 requests from sample HAR');
+    assert.strictEqual(requests.length, 52, 'Should parse all 52 requests from sample HAR');
 
     const first = requests[0];
     assert.strictEqual(first.method, 'GET');

@@ -13,28 +13,25 @@ let appState = {
   capturedCount: 0,
   capturedRequests: [],
   serverHistory: [],
-  framework: { framework: 'vite', name: 'Vite / React' },
-  port: 4000
+  framework: { framework: 'vanilla', name: 'Frontend Project' },
+  port: 4000,
+  sessions: [],
+  isGhostMode: false,
+  activeGhostSession: null
 };
 
-let selectedRequestId = null;
-let selectedRestEndpointId = null;
-let selectedGqlEndpointId = null;
+let selectedEndpointId = null;
 
-// Initialize on DOM load
 document.addEventListener('DOMContentLoaded', () => {
   setupTabs();
-  setupSubTabs();
   setupActionButtons();
-  setupScenarioButtons();
-  setupSearchInputs();
+  setupSearchInput();
   setupSettingsHandlers();
-
-  // Request initial state from extension
+  
+  // Request initial state
   vscode.postMessage({ type: 'GET_INITIAL_STATE' });
 });
 
-// Handle incoming messages from extension host
 window.addEventListener('message', (event) => {
   const message = event.data;
   if (!message) return;
@@ -47,74 +44,51 @@ window.addEventListener('message', (event) => {
 
     case 'SELECT_ENDPOINT':
       if (message.endpointId) {
-        if (message.endpointId.startsWith('rest_')) {
-          switchTab('rest');
-          selectRestEndpoint(message.endpointId);
-        } else if (message.endpointId.startsWith('gql_')) {
-          switchTab('graphql');
-          selectGqlEndpoint(message.endpointId);
-        }
+        switchTab('endpoints');
+        selectEndpoint(message.endpointId);
       }
       break;
   }
 });
 
-function renderAll() {
-  renderHeaderAndStatus();
-  renderOverviewMetrics();
-  renderTrafficList();
-  renderRestEndpoints();
-  renderGqlOperations();
-  renderScenariosTab();
-  renderSettings();
-}
-
-function switchTab(tabId) {
-  document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('active', b.dataset.tab === tabId));
-  document.querySelectorAll('.tab-pane').forEach((p) => p.classList.toggle('active', p.id === `tab-${tabId}`));
-}
-
 function setupTabs() {
-  document.querySelectorAll('.tab-nav .tab-btn').forEach((btn) => {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       switchTab(btn.dataset.tab);
     });
   });
-}
 
-function setupSubTabs() {
-  document.querySelectorAll('.sub-tabs .sub-tab-btn').forEach((btn) => {
+  document.querySelectorAll('.sub-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const parent = btn.closest('.inspector-pane');
-      if (!parent) return;
-      parent.querySelectorAll('.sub-tab-btn').forEach((b) => b.classList.remove('active'));
-      parent.querySelectorAll('.subtab-pane').forEach((p) => p.classList.remove('active'));
-
+      document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.subtab-pane').forEach(p => p.classList.remove('active'));
+      
       btn.classList.add('active');
-      const targetId = `subtab-${btn.dataset.subtab}`;
-      const targetPane = document.getElementById(targetId);
-      if (targetPane) targetPane.classList.add('active');
+      const paneId = `subtab-${btn.dataset.subtab}`;
+      const pane = document.getElementById(paneId);
+      if (pane) pane.classList.add('active');
     });
   });
 }
 
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === `tab-${tabId}`));
+}
+
 function setupActionButtons() {
-  const btnToggleServer = document.getElementById('btnToggleServer');
-  btnToggleServer.addEventListener('click', () => {
-    if (appState.isRunning) {
-      vscode.postMessage({ type: 'ACTION', payload: { action: 'stopServer' } });
-    } else {
-      vscode.postMessage({ type: 'ACTION', payload: { action: 'startServer' } });
-    }
+  document.getElementById('btnToggleServer')?.addEventListener('click', () => {
+    vscode.postMessage({
+      type: 'ACTION',
+      payload: { action: appState.isRunning ? 'stopServer' : 'startServer' }
+    });
   });
 
-  const btnImportHar = document.getElementById('btnImportHar');
-  btnImportHar.addEventListener('click', () => {
+  document.getElementById('btnImportHar')?.addEventListener('click', () => {
     vscode.postMessage({ type: 'ACTION', payload: { action: 'importHar' } });
   });
 
-  const btnToggleRecord = document.getElementById('btnToggleRecord');
-  btnToggleRecord.addEventListener('click', () => {
+  document.getElementById('btnToggleRecord')?.addEventListener('click', () => {
     if (appState.isRecording) {
       vscode.postMessage({ type: 'ACTION', payload: { action: 'stopRecording' } });
     } else {
@@ -122,85 +96,111 @@ function setupActionButtons() {
     }
   });
 
-  const btnCopyEnv = document.getElementById('btnCopyEnv');
-  btnCopyEnv.addEventListener('click', () => {
-    const code = document.getElementById('frontendEnvSnippet').innerText;
-    navigator.clipboard?.writeText(code);
-    btnCopyEnv.innerText = 'Copied!';
-    setTimeout(() => { btnCopyEnv.innerText = 'Copy'; }, 1500);
+  document.getElementById('btnCreateGhostSession')?.addEventListener('click', () => {
+    vscode.postMessage({ type: 'START_GHOST_SESSION' });
   });
 
-  const btnClearTraffic = document.getElementById('btnClearTraffic');
-  btnClearTraffic.addEventListener('click', () => {
+  document.getElementById('btnInitOverview')?.addEventListener('click', () => {
+    vscode.postMessage({ type: 'ACTION', payload: { action: 'initProject' } });
+  });
+
+  document.getElementById('btnClearHistory')?.addEventListener('click', () => {
     vscode.postMessage({ type: 'CLEAR_HISTORY' });
   });
+
+  // Code Gen Actions
+  document.getElementById('btnGenTypes')?.addEventListener('click', () => {
+    if (selectedEndpointId) {
+      vscode.postMessage({ type: 'GENERATE_TYPES', payload: { endpointId: selectedEndpointId } });
+    }
+  });
+
+  document.getElementById('btnGenClient')?.addEventListener('click', () => {
+    if (selectedEndpointId) {
+      vscode.postMessage({ type: 'GENERATE_CLIENT', payload: { endpointId: selectedEndpointId } });
+    }
+  });
+
+  document.getElementById('btnGenTest')?.addEventListener('click', () => {
+    if (selectedEndpointId) {
+      vscode.postMessage({ type: 'GENERATE_TEST', payload: { endpointId: selectedEndpointId } });
+    }
+  });
+
+  document.getElementById('btnInsertPlaceholder')?.addEventListener('click', () => {
+    if (selectedEndpointId) {
+      vscode.postMessage({ type: 'INSERT_API_PLACEHOLDER', payload: { endpointId: selectedEndpointId } });
+    }
+  });
+
+  document.getElementById('btnGenerateIntegration')?.addEventListener('click', () => {
+    if (selectedEndpointId) {
+      vscode.postMessage({ type: 'GENERATE_INTEGRATION', payload: { endpointId: selectedEndpointId } });
+    }
+  });
+
+  document.getElementById('btnGenResilienceTest')?.addEventListener('click', () => {
+    if (selectedEndpointId) {
+      vscode.postMessage({ type: 'GENERATE_RESILIENCE_TEST', payload: { endpointId: selectedEndpointId } });
+    }
+  });
+
+  document.getElementById('btnReplayEndpoint')?.addEventListener('click', () => {
+    if (selectedEndpointId) {
+      vscode.postMessage({
+        type: 'ACTION',
+        payload: { action: 'replayEndpoint', data: { endpointId: selectedEndpointId } }
+      });
+    }
+  });
+
+  document.getElementById('btnApplyResilience')?.addEventListener('click', () => {
+    if (!selectedEndpointId) return;
+    
+    const statusCode = parseInt(document.getElementById('inspInjectStatus').value, 10);
+    const latency = parseInt(document.getElementById('inspInjectLatency').value, 10) || 0;
+
+    // Find the endpoint
+    const schema = appState.schema;
+    const epIndex = schema.restEndpoints.findIndex(e => e.id === selectedEndpointId);
+    if (epIndex >= 0) {
+      const endpoint = schema.restEndpoints[epIndex];
+      endpoint.scenarioRule = {
+        activeScenario: statusCode === 200 ? 'normal' : 'server-error',
+        customStatusCode: statusCode,
+        customLatencyMs: latency
+      };
+      
+      vscode.postMessage({
+        type: 'UPDATE_REST_ENDPOINT',
+        payload: { endpoint }
+      });
+    }
+  });
 }
 
-function setupScenarioButtons() {
-  document.querySelectorAll('.scenario-select-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const scenario = btn.dataset.scenario;
-      vscode.postMessage({ type: 'UPDATE_SCENARIO', payload: { scenario } });
-    });
+function setupSearchInput() {
+  document.getElementById('endpointSearch')?.addEventListener('input', (e) => {
+    renderRestEndpoints(e.target.value.toLowerCase());
   });
-
-  document.querySelectorAll('input[name="globalScenRadio"]').forEach((radio) => {
-    radio.addEventListener('change', (e) => {
-      const scenario = e.target.value;
-      vscode.postMessage({ type: 'UPDATE_SCENARIO', payload: { scenario } });
-    });
-  });
-
-  document.querySelectorAll('.scenario-card').forEach((card) => {
-    card.addEventListener('click', () => {
-      const scen = card.dataset.scen;
-      const radio = card.querySelector('input[type="radio"]');
-      if (radio) {
-        radio.checked = true;
-        vscode.postMessage({ type: 'UPDATE_SCENARIO', payload: { scenario: scen } });
-      }
-    });
-  });
-}
-
-function setupSearchInputs() {
-  document.getElementById('trafficSearchInput')?.addEventListener('input', () => renderTrafficList());
-  document.getElementById('restSearchInput')?.addEventListener('input', () => renderRestEndpoints());
-  document.getElementById('gqlSearchInput')?.addEventListener('input', () => renderGqlOperations());
 }
 
 function setupSettingsHandlers() {
-  const btnSaveConfig = document.getElementById('btnSaveConfig');
-  btnSaveConfig?.addEventListener('click', () => {
-    const port = parseInt(document.getElementById('inputServerPort').value, 10) || 4000;
-    const latencyEnabled = document.getElementById('checkEnableLatency').checked;
-    const latencyMin = parseInt(document.getElementById('inputLatencyMin').value, 10) || 100;
-    const latencyMax = parseInt(document.getElementById('inputLatencyMax').value, 10) || 500;
+  document.getElementById('btnSaveSettings')?.addEventListener('click', () => {
+    const port = parseInt(document.getElementById('settingPort').value, 10) || 4000;
+    const scenario = document.getElementById('settingGlobalScenario').value;
+    const latency = document.getElementById('settingLatencyEnabled').checked;
 
     vscode.postMessage({
       type: 'UPDATE_CONFIG',
       payload: {
         config: {
           port,
+          globalScenario: scenario,
           latency: {
-            enabled: latencyEnabled,
-            min: latencyMin,
-            max: latencyMax
-          }
-        }
-      }
-    });
-  });
-
-  document.getElementById('checkEnableLatency')?.addEventListener('change', (e) => {
-    const enabled = e.target.checked;
-    vscode.postMessage({
-      type: 'UPDATE_CONFIG',
-      payload: {
-        config: {
-          latency: {
-            ...appState.config.latency,
-            enabled
+            enabled: latency,
+            min: 100,
+            max: 500
           }
         }
       }
@@ -208,377 +208,432 @@ function setupSettingsHandlers() {
   });
 }
 
-function renderHeaderAndStatus() {
-  // Server Status
-  const serverBadge = document.getElementById('serverStatusBadge');
+function renderAll() {
+  renderStatusPills();
+  renderOverviewTab();
+  renderRestEndpoints();
+  renderSessionsTab();
+  renderHistoryTab();
+  renderSettingsTab();
+}
+
+function renderStatusPills() {
+  // Mode dot
+  const modeDot = document.getElementById('modeDot');
+  const modeText = document.getElementById('modeText');
+  if (appState.isGhostMode) {
+    modeDot.className = 'dot live';
+    modeText.innerText = `Ghost Mode: ${appState.activeGhostSession?.name || 'Active'}`;
+  } else {
+    modeDot.className = 'dot';
+    modeText.innerText = 'Real Backend Mode';
+  }
+
+  // Server dot
+  const serverDot = document.getElementById('serverDot');
+  const serverText = document.getElementById('serverText');
   const btnToggleServer = document.getElementById('btnToggleServer');
-  const btnToggleServerText = document.getElementById('btnToggleServerText');
-
   if (appState.isRunning) {
-    serverBadge.innerHTML = `<span class="dot running"></span><span class="status-text">Server: :${appState.port} Running</span>`;
-    btnToggleServer.className = 'btn btn-primary btn-stop';
-    btnToggleServerText.innerText = 'Stop Server';
+    serverDot.className = 'dot live';
+    serverText.innerText = `Server: Running (: ${appState.port})`;
+    btnToggleServer.innerText = 'Stop Server';
   } else {
-    serverBadge.innerHTML = `<span class="dot stopped"></span><span class="status-text">Server: Stopped</span>`;
-    btnToggleServer.className = 'btn btn-primary';
-    btnToggleServerText.innerText = 'Start Server';
+    serverDot.className = 'dot stopped';
+    serverText.innerText = 'Server: Offline';
+    btnToggleServer.innerText = 'Start Server';
   }
 
-  // Recording Status
-  const recordingBadge = document.getElementById('recordingStatusBadge');
+  // Recording dot
+  const recordingDot = document.getElementById('recordingDot');
+  const recordingText = document.getElementById('recordingText');
   const btnToggleRecord = document.getElementById('btnToggleRecord');
-  const btnToggleRecordText = document.getElementById('btnToggleRecordText');
-
   if (appState.isRecording) {
-    recordingBadge.innerHTML = `<span class="dot recording"></span><span class="status-text">Recorder: Active</span>`;
-    btnToggleRecord.className = 'btn btn-secondary recording-active';
-    btnToggleRecordText.innerText = 'Stop Recording';
+    recordingDot.className = 'dot live';
+    recordingText.innerText = 'Recording: Capturing';
+    btnToggleRecord.innerText = 'Stop Recording';
   } else {
-    recordingBadge.innerHTML = `<span class="dot idle"></span><span class="status-text">Recorder: Inactive</span>`;
-    btnToggleRecord.className = 'btn btn-secondary';
-    btnToggleRecordText.innerText = 'Record Browser';
+    recordingDot.className = 'dot';
+    recordingText.innerText = 'Recording: Inactive';
+    btnToggleRecord.innerText = 'Record Session';
   }
-
-  // Scenario Badge
-  const currentScenario = appState.config.globalScenario || 'normal';
-  document.getElementById('badgeScenarioName').innerText = currentScenario.toUpperCase();
-
-  // Navigation badge counts
-  document.getElementById('navCapturedCount').innerText = appState.capturedCount;
-  document.getElementById('navRestCount').innerText = appState.schema.restEndpoints.length;
-  document.getElementById('navGqlCount').innerText = appState.schema.graphqlEndpoints.length;
 }
 
-function renderOverviewMetrics() {
-  document.getElementById('metricCaptured').innerText = appState.capturedCount;
-  document.getElementById('metricRest').innerText = appState.schema.restEndpoints.length;
-  document.getElementById('metricGql').innerText = appState.schema.graphqlEndpoints.length;
+function renderOverviewTab() {
+  document.getElementById('metricRestCount').innerText = appState.schema.restEndpoints.length;
+  document.getElementById('metricGqlCount').innerText = appState.schema.graphqlEndpoints.length;
+  document.getElementById('metricSessionsCount').innerText = appState.sessions.length;
   document.getElementById('metricPort').innerText = `:${appState.port}`;
 
-  // Update scenario buttons active state
-  const currentScenario = appState.config.globalScenario || 'normal';
-  document.querySelectorAll('.scenario-select-btn').forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.scenario === currentScenario);
-  });
+  const statusText = document.getElementById('schemaStatusText');
+  if (statusText) {
+    if (appState.schema.restEndpoints.length > 0 || appState.schema.graphqlEndpoints.length > 0) {
+      statusText.innerText = `Mapped ${appState.schema.restEndpoints.length} REST endpoints and ${appState.schema.graphqlEndpoints.length} GraphQL operations. Mock backend is ready.`;
+    } else {
+      statusText.innerText = 'No API routes mapped yet. Import a HAR capture or record some traffic.';
+    }
+  }
 
-  // Framework tag
-  if (appState.framework?.name) {
-    document.getElementById('detectedFrameworkTag').innerText = appState.framework.name;
+  // Render coverage details
+  const cov = appState.coverage || { percent: 0, integrated: 0, total: 0 };
+  const percentElem = document.getElementById('covPercent');
+  const integratedElem = document.getElementById('covIntegrated');
+  const totalElem = document.getElementById('covTotal');
+  const barElem = document.getElementById('covBar');
+
+  if (percentElem) percentElem.innerText = `${cov.percent}%`;
+  if (integratedElem) integratedElem.innerText = cov.integrated;
+  if (totalElem) totalElem.innerText = cov.total;
+  if (barElem) barElem.style.width = `${cov.percent}%`;
+
+  // Render sensitive data alert warning
+  const alertElem = document.getElementById('sensitiveDataAlert');
+  if (alertElem) {
+    alertElem.style.display = appState.sensitiveDataWarning ? 'block' : 'none';
+  }
+
+  // Render Integration gaps listing in Overview
+  const gapsDiv = document.getElementById('overviewIntegrationGaps');
+  if (gapsDiv) {
+    gapsDiv.innerHTML = '';
+    const unintegrated = appState.schema.restEndpoints.filter(ep => {
+      const scan = appState.scanResults.find(r => r.endpointId === ep.id);
+      return !scan || scan.usages.length === 0;
+    });
+
+    if (unintegrated.length === 0) {
+      gapsDiv.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">No integration gaps detected. All API endpoints mapped successfully.</p>';
+    } else {
+      unintegrated.forEach(ep => {
+        const item = document.createElement('div');
+        item.style.marginBottom = '12px';
+        item.style.padding = '8px';
+        item.style.border = '1px solid var(--border-color)';
+        item.style.borderRadius = '4px';
+        
+        const advice = appState.integrationAdvice[ep.id] || [];
+        let adviceText = '';
+        if (advice.length > 0) {
+          const fileName = advice[0].filePath.split(/[\\/]/).pop();
+          adviceText = `Suggested Integration: <code>${fileName}</code> (${advice[0].reason})`;
+        } else {
+          adviceText = 'No location suggested (low confidence)';
+        }
+
+        item.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px;">
+            <strong><span class="badge badge-${ep.method.toLowerCase()}">${ep.method}</span> <code>${ep.pathPattern}</code></strong>
+            <span style="font-size:10px; padding:2px 6px; border-radius:3px; background-color:rgba(210, 153, 34, 0.1); color:var(--warning);">Integration Gap</span>
+          </div>
+          <div style="font-size:12px; color:var(--text-muted);">
+            ${adviceText}
+          </div>
+        `;
+        gapsDiv.appendChild(item);
+      });
+    }
   }
 }
 
-function renderTrafficList() {
-  const tbody = document.getElementById('trafficTableBody');
-  const filter = (document.getElementById('trafficSearchInput')?.value || '').toLowerCase();
+function renderRestEndpoints(filter = '') {
+  const tbody = document.getElementById('endpointsTableBody');
+  const empty = document.getElementById('endpointsEmptyState');
+  if (!tbody) return;
 
-  // Combine captured requests and live server history
-  const allEvents = [...appState.capturedRequests];
+  const endpoints = appState.schema.restEndpoints;
+  const filtered = endpoints.filter(ep => 
+    ep.pathPattern.toLowerCase().includes(filter) || 
+    ep.method.toLowerCase().includes(filter)
+  );
 
-  const filtered = allEvents.filter((item) => {
-    if (!filter) return true;
-    return (item.url && item.url.toLowerCase().includes(filter)) ||
-           (item.path && item.path.toLowerCase().includes(filter)) ||
-           (item.method && item.method.toLowerCase().includes(filter));
-  });
-
+  tbody.innerHTML = '';
+  
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="4">No requests found matching filter.</td></tr>';
+    empty.style.display = 'flex';
     return;
   }
+  
+  empty.style.display = 'none';
 
-  tbody.innerHTML = filtered.map((req) => {
-    const isSelected = req.id === selectedRequestId;
-    const methodClass = `method-${(req.method || 'GET').toLowerCase()}`;
-    const status = req.response?.status || req.status || 200;
-    const statusClass = status >= 400 ? 'status-err' : '';
-    const duration = req.timing?.duration || req.durationMs || 50;
-
-    return `
-      <tr class="${isSelected ? 'active' : ''}" onclick="selectTrafficRequest('${req.id}')">
-        <td><span class="method-badge ${methodClass}">${req.method}</span></td>
-        <td style="font-family: var(--font-mono); font-size: 11px;">${req.path || req.url}</td>
-        <td><span class="insp-status-badge ${statusClass}">${status}</span></td>
-        <td style="color: var(--text-muted); font-size: 11px;">${duration}ms</td>
-      </tr>
+  filtered.forEach(ep => {
+    const tr = document.createElement('tr');
+    if (ep.id === selectedEndpointId) tr.className = 'selected';
+    
+    const methodLower = ep.method.toLowerCase();
+    tr.innerHTML = `
+      <td><span class="badge badge-${methodLower}">${ep.method}</span></td>
+      <td style="font-family: var(--font-mono);">${ep.pathPattern}</td>
+      <td>${ep.requestCount}</td>
     `;
-  }).join('');
+    
+    tr.addEventListener('click', () => {
+      selectEndpoint(ep.id);
+    });
+    
+    tbody.appendChild(tr);
+  });
 }
 
-window.selectTrafficRequest = function(reqId) {
-  selectedRequestId = reqId;
-  renderTrafficList();
-
-  const req = appState.capturedRequests.find((r) => r.id === reqId);
-  if (!req) return;
-
-  document.getElementById('inspectorEmptyState').style.display = 'none';
-  document.getElementById('inspectorContent').style.display = 'flex';
-
-  document.getElementById('inspMethod').className = `method-badge method-${req.method.toLowerCase()}`;
-  document.getElementById('inspMethod').innerText = req.method;
-  document.getElementById('inspPath').innerText = req.path || req.url;
-
-  const status = req.response?.status || 200;
-  const statusEl = document.getElementById('inspStatus');
-  statusEl.className = `insp-status-badge ${status >= 400 ? 'status-err' : ''}`;
-  statusEl.innerText = `${status} ${req.response?.statusText || ''}`;
-
-  // Headers
-  const reqHeadersEl = document.getElementById('inspReqHeaders');
-  reqHeadersEl.innerHTML = Object.entries(req.headers || {}).map(([k, v]) => `
-    <div class="kv-item"><span class="kv-key">${k}:</span><span class="kv-val">${v}</span></div>
-  `).join('') || '<div class="kv-item"><span class="kv-val">No request headers</span></div>';
-
-  const resHeadersEl = document.getElementById('inspResHeaders');
-  resHeadersEl.innerHTML = Object.entries(req.response?.headers || {}).map(([k, v]) => `
-    <div class="kv-item"><span class="kv-key">${k}:</span><span class="kv-val">${v}</span></div>
-  `).join('') || '<div class="kv-item"><span class="kv-val">No response headers</span></div>';
-
-  // Query Params
-  const queryEl = document.getElementById('inspQueryParams');
-  queryEl.innerHTML = Object.entries(req.query || {}).map(([k, v]) => `
-    <div class="kv-item"><span class="kv-key">${k}:</span><span class="kv-val">${Array.isArray(v) ? v.join(', ') : v}</span></div>
-  `).join('') || '<div class="kv-item"><span class="kv-val">No query parameters</span></div>';
-
-  // Request Body
-  document.getElementById('inspReqBodyCode').innerText = req.body
-    ? (typeof req.body === 'object' ? JSON.stringify(req.body, null, 2) : String(req.body))
-    : 'null';
-
-  // Response Body
-  document.getElementById('inspResBodyCode').innerText = req.response?.body !== undefined
-    ? (typeof req.response.body === 'object' ? JSON.stringify(req.response.body, null, 2) : String(req.response.body))
-    : 'null';
-
-  // Timing
-  const timingEl = document.getElementById('inspTimingBreakdown');
-  const t = req.timing || { duration: 50 };
-  timingEl.innerHTML = `
-    <div class="key-value-list">
-      <div class="kv-item"><span class="kv-key">Total Duration:</span><span class="kv-val">${t.duration}ms</span></div>
-      ${t.dns ? `<div class="kv-item"><span class="kv-key">DNS Lookup:</span><span class="kv-val">${t.dns}ms</span></div>` : ''}
-      ${t.connect ? `<div class="kv-item"><span class="kv-key">TCP Connect:</span><span class="kv-val">${t.connect}ms</span></div>` : ''}
-      ${t.wait ? `<div class="kv-item"><span class="kv-key">Server Wait (TTFB):</span><span class="kv-val">${t.wait}ms</span></div>` : ''}
-      ${t.receive ? `<div class="kv-item"><span class="kv-key">Content Download:</span><span class="kv-val">${t.receive}ms</span></div>` : ''}
-    </div>
-  `;
-};
-
-function renderRestEndpoints() {
-  const container = document.getElementById('restEndpointsList');
-  const filter = (document.getElementById('restSearchInput')?.value || '').toLowerCase();
-
-  const filtered = appState.schema.restEndpoints.filter((ep) => {
-    if (!filter) return true;
-    return ep.pathPattern.toLowerCase().includes(filter) || ep.method.toLowerCase().includes(filter);
+function selectEndpoint(id) {
+  selectedEndpointId = id;
+  
+  // Highlight row in table
+  document.querySelectorAll('#endpointsTableBody tr').forEach((tr, index) => {
+    const ep = appState.schema.restEndpoints[index];
+    if (ep && ep.id === id) {
+      tr.classList.add('selected');
+    } else {
+      tr.classList.remove('selected');
+    }
   });
 
-  if (filtered.length === 0) {
-    container.innerHTML = '<div class="empty-state">No REST endpoints found matching search.</div>';
-    return;
-  }
-
-  container.innerHTML = filtered.map((ep) => {
-    const isSelected = ep.id === selectedRestEndpointId;
-    const methodClass = `method-${ep.method.toLowerCase()}`;
-    return `
-      <div class="endpoint-card-item ${isSelected ? 'active' : ''}" onclick="selectRestEndpoint('${ep.id}')">
-        <div class="endpoint-card-left">
-          <span class="method-badge ${methodClass}">${ep.method}</span>
-          <span class="endpoint-pattern">${ep.pathPattern}</span>
-        </div>
-        <span class="endpoint-count-badge">${ep.requestCount} calls</span>
-      </div>
-    `;
-  }).join('');
-}
-
-window.selectRestEndpoint = function(endpointId) {
-  selectedRestEndpointId = endpointId;
-  renderRestEndpoints();
-
-  const ep = appState.schema.restEndpoints.find((e) => e.id === endpointId);
+  const ep = appState.schema.restEndpoints.find(e => e.id === id);
   if (!ep) return;
 
-  document.getElementById('restEditorEmptyState').style.display = 'none';
-  document.getElementById('restEditorContent').style.display = 'block';
+  document.getElementById('inspectorEmptyState').style.display = 'none';
+  document.getElementById('inspectorContent').style.display = 'block';
 
-  const methodEl = document.getElementById('editRestMethod');
-  methodEl.className = `method-badge method-${ep.method.toLowerCase()}`;
-  methodEl.innerText = ep.method;
-  document.getElementById('editRestPath').value = ep.pathPattern;
+  // Details
+  document.getElementById('inspMethod').className = `badge badge-${ep.method.toLowerCase()}`;
+  document.getElementById('inspMethod').innerText = ep.method;
+  document.getElementById('inspPath').innerText = ep.pathPattern;
 
-  // Parameters
-  const paramsBox = document.getElementById('editRestParamsBox');
-  const tagsEl = document.getElementById('editRestParamTags');
-  if (ep.parameters && ep.parameters.length > 0) {
-    paramsBox.style.display = 'block';
-    tagsEl.innerHTML = ep.parameters.map((p) => `
-      <span class="param-tag">:${p.name} <small>(${p.inferredType})</small></span>
-    `).join('');
-  } else {
-    paramsBox.style.display = 'none';
-  }
+  document.getElementById('inspReqCount').innerText = ep.requestCount;
+  document.getElementById('inspStatus').innerText = ep.defaultResponse?.statusCode || 200;
 
-  // Pagination
-  const pagBox = document.getElementById('editRestPaginationBox');
-  const pagDetails = document.getElementById('editRestPaginationDetails');
-  if (ep.pagination?.enabled) {
-    pagBox.style.display = 'block';
-    pagDetails.innerHTML = `
-      <div class="key-value-list">
-        <div class="kv-item"><span class="kv-key">Page Param:</span><span class="kv-val">${ep.pagination.pageParam || 'page'}</span></div>
-        <div class="kv-item"><span class="kv-key">Limit Param:</span><span class="kv-val">${ep.pagination.limitParam || ep.pagination.pageSizeParam || 'limit'}</span></div>
-        <div class="kv-item"><span class="kv-key">Items Property:</span><span class="kv-val">${ep.pagination.itemsPath ? `obj.${ep.pagination.itemsPath}` : 'Root Array'}</span></div>
-      </div>
-    `;
-  } else {
-    pagBox.style.display = 'none';
-  }
+  const pNames = ep.parameters.map(p => `:${p.name} (${p.inferredType})`);
+  document.getElementById('inspPathParams').innerText = pNames.length > 0 ? pNames.join(', ') : 'None';
 
-  // Scenario override
-  const scenSelect = document.getElementById('editRestScenarioSelect');
-  scenSelect.value = ep.scenarioRule?.activeScenario || 'default';
+  const qNames = ep.queryParameters.map(q => q.name);
+  document.getElementById('inspQueryParams').innerText = qNames.length > 0 ? qNames.join(', ') : 'None';
 
-  const errRate = document.getElementById('editRestErrorRate');
-  const errRateVal = document.getElementById('editRestErrorRateVal');
-  const pVal = Math.round((ep.scenarioRule?.errorProbability || 0) * 100);
-  errRate.value = pVal;
-  errRateVal.innerText = `${pVal}%`;
+  // Body preview
+  document.getElementById('inspResponseBody').innerText = JSON.stringify(ep.defaultResponse?.body || {}, null, 2);
 
-  errRate.oninput = (e) => {
-    errRateVal.innerText = `${e.target.value}%`;
-  };
+  // Set resilience forms defaults
+  const rule = ep.scenarioRule;
+  document.getElementById('inspInjectStatus').value = rule?.customStatusCode || 200;
+  document.getElementById('inspInjectLatency').value = rule?.customLatencyMs || 0;
 
-  // Response Payload Textarea
-  const body = ep.defaultResponse?.body;
-  document.getElementById('editRestBodyText').value = body !== undefined
-    ? (typeof body === 'object' ? JSON.stringify(body, null, 2) : String(body))
-    : '{}';
-
-  // Save handler
-  document.getElementById('btnSaveRestEndpoint').onclick = () => {
-    try {
-      const parsedBody = JSON.parse(document.getElementById('editRestBodyText').value);
-      const selectedScen = scenSelect.value;
-      const errorProb = parseInt(errRate.value, 10) / 100;
-
-      const updatedEp = {
-        ...ep,
-        defaultResponse: {
-          ...ep.defaultResponse,
-          body: parsedBody
-        },
-        scenarioRule: selectedScen !== 'default' || errorProb > 0 ? {
-          activeScenario: selectedScen !== 'default' ? selectedScen : 'normal',
-          errorProbability: errorProb
-        } : undefined
-      };
-
-      vscode.postMessage({
-        type: 'UPDATE_REST_ENDPOINT',
-        payload: { endpoint: updatedEp }
+  // Render frontend references (Usage tab)
+  const usageList = document.getElementById('inspUsageList');
+  if (usageList) {
+    usageList.innerHTML = '';
+    const scan = appState.scanResults.find(r => r.endpointId === id);
+    const usages = scan ? scan.usages : [];
+    if (usages.length === 0) {
+      usageList.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">No usages found in the workspace.</p>';
+    } else {
+      usages.forEach(u => {
+        const item = document.createElement('div');
+        item.style.marginBottom = '12px';
+        item.style.padding = '8px';
+        item.style.border = '1px solid var(--border-color)';
+        item.style.borderRadius = '4px';
+        
+        const fileName = u.filePath.split(/[\\/]/).pop();
+        item.innerHTML = `
+          <div style="display:flex; justify-content:space-between; margin-bottom: 6px; font-size:12px;">
+            <strong style="color:var(--primary);">${fileName}:${u.lineNumber}</strong>
+            <span style="font-size:10px; padding:2px 6px; border-radius:3px; background-color:var(--border-color); color:var(--text-primary); font-weight:bold;">${u.confidence}</span>
+          </div>
+          <code style="display:block; background-color:rgba(0,0,0,0.2); padding:6px; border-radius:3px; font-family:var(--font-mono); font-size:11px; overflow-x:auto; white-space:pre;">${u.lineContent}</code>
+        `;
+        usageList.appendChild(item);
       });
-      alert('Endpoint mock response updated!');
-    } catch (err) {
-      alert('Invalid JSON in mock response body: ' + err.message);
     }
-  };
-};
+  }
 
-function renderGqlOperations() {
-  const container = document.getElementById('gqlOperationsList');
-  const filter = (document.getElementById('gqlSearchInput')?.value || '').toLowerCase();
+  // Render Integration Gap & Advice (Integration tab)
+  const adviceList = document.getElementById('integrationAdviceList');
+  const gapBanner = document.getElementById('integrationGapBanner');
+  const scan = appState.scanResults.find(r => r.endpointId === id);
+  const usages = scan ? scan.usages : [];
 
-  const filtered = appState.schema.graphqlEndpoints.filter((g) => {
-    if (!filter) return true;
-    return g.operationName.toLowerCase().includes(filter) || g.operationType.toLowerCase().includes(filter);
-  });
+  if (gapBanner) {
+    gapBanner.style.display = usages.length === 0 ? 'block' : 'none';
+  }
 
-  if (filtered.length === 0) {
-    container.innerHTML = '<div class="empty-state">No GraphQL operations found matching search.</div>';
+  if (adviceList) {
+    adviceList.innerHTML = '';
+    const advice = appState.integrationAdvice[id] || [];
+    if (usages.length > 0) {
+      adviceList.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Endpoint is already integrated in the workspace.</p>';
+    } else if (advice.length === 0) {
+      adviceList.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">No candidate files suggested. Select an integration path manually.</p>';
+    } else {
+      advice.forEach(ad => {
+        const item = document.createElement('div');
+        item.style.marginBottom = '12px';
+        item.style.padding = '8px';
+        item.style.border = '1px solid var(--border-color)';
+        item.style.borderRadius = '4px';
+        
+        const fileName = ad.filePath.split(/[\\/]/).pop();
+        item.innerHTML = `
+          <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+            <strong>${fileName}</strong>
+            <span style="font-size:10px; padding:2px 6px; border-radius:3px; background-color:rgba(210,153,34,0.1); color:var(--warning); font-weight:bold;">${ad.confidence} Confidence</span>
+          </div>
+          <div style="font-size:12px; color:var(--text-muted);">${ad.reason}</div>
+        `;
+        adviceList.appendChild(item);
+      });
+    }
+  }
+
+  // Render Resilience report
+  const resilienceReportList = document.getElementById('resilienceReportList');
+  if (resilienceReportList) {
+    resilienceReportList.innerHTML = '';
+    const report = appState.resilienceReports[id];
+    if (!report) {
+      resilienceReportList.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Resilience checks are not available for unintegrated endpoints.</p>';
+    } else {
+      let html = '<ul style="margin:0; padding-left:16px; font-size:13px; margin-bottom:12px; color:var(--text-secondary);">';
+      report.statusGaps.forEach(g => {
+        const color = g.status === 'handled' ? 'var(--primary)' : g.status === 'potentially handled' ? 'var(--warning)' : 'rgba(255, 100, 100, 0.8)';
+        html += `<li style="margin-bottom:6px;"><strong>HTTP ${g.code} (${g.label}):</strong> <span style="color:${color}; font-weight:bold;">${g.status.toUpperCase()}</span></li>`;
+      });
+      html += '</ul>';
+
+      if (report.reasons.length > 0) {
+        html += '<h5 style="margin-top:12px; margin-bottom:6px; font-size:13px; color:var(--text-primary);">Potential Resilience Gaps</h5>';
+        report.reasons.forEach(r => {
+          html += `<div style="font-size:12px; color:rgba(255,100,100,0.8); margin-bottom:6px; padding: 6px; border-left:2px solid rgba(255,100,100,0.8); background-color:rgba(255,100,100,0.05); border-radius: 0 4px 4px 0;">⚠️ ${r}</div>`;
+        });
+      }
+
+      resilienceReportList.innerHTML = html;
+    }
+  }
+
+  // Render Performance stats
+  const perfInfo = appState.performanceInsights[id];
+  const perfAvg = document.getElementById('perfAvgLatency');
+  const perfMin = document.getElementById('perfMinLatency');
+  const perfMax = document.getElementById('perfMaxLatency');
+  const perfCount = document.getElementById('perfSampleCount');
+  
+  if (perfAvg && perfMin && perfMax && perfCount) {
+    if (perfInfo) {
+      perfAvg.innerText = `${perfInfo.avg}ms`;
+      perfMin.innerText = `${perfInfo.min}ms`;
+      perfMax.innerText = `${perfInfo.max}ms`;
+      perfCount.innerText = perfInfo.count;
+    } else {
+      perfAvg.innerText = 'Insufficient traffic data';
+      perfMin.innerText = '-';
+      perfMax.innerText = '-';
+      perfCount.innerText = '0';
+    }
+  }
+}
+
+function renderSessionsTab() {
+  const grid = document.getElementById('sessionsGrid');
+  const empty = document.getElementById('sessionsEmptyState');
+  if (!grid) return;
+
+  grid.innerHTML = '';
+  const sessions = appState.sessions;
+
+  if (sessions.length === 0) {
+    empty.style.display = 'flex';
     return;
   }
 
-  container.innerHTML = filtered.map((g) => {
-    const isSelected = g.id === selectedGqlEndpointId;
-    return `
-      <div class="endpoint-card-item ${isSelected ? 'active' : ''}" onclick="selectGqlEndpoint('${g.id}')">
-        <div class="endpoint-card-left">
-          <span class="method-badge method-gql">${g.operationType.toUpperCase()}</span>
-          <span class="endpoint-pattern">${g.operationName}</span>
-        </div>
-        <span class="endpoint-count-badge">${g.requestCount} calls</span>
+  empty.style.display = 'none';
+
+  sessions.forEach(sess => {
+    const card = document.createElement('div');
+    const isActive = appState.isGhostMode && appState.activeGhostSession?.id === sess.id;
+    card.className = `session-card ${isActive ? 'active' : ''}`;
+
+    const date = new Date(sess.createdAt).toLocaleDateString();
+    
+    card.innerHTML = `
+      <div class="session-card-header">
+        <span class="session-name">${sess.name}</span>
+        <span class="session-date">${date}</span>
+      </div>
+      <div class="session-meta">
+        <div>Captured requests: ${sess.metadata.requestCount}</div>
+        <div>REST Endpoints: ${sess.metadata.restEndpointCount}</div>
+        <div>GraphQL operations: ${sess.metadata.graphqlEndpointCount}</div>
+      </div>
+      <div class="session-actions">
+        ${isActive 
+          ? `<button class="btn btn-secondary" onclick="exitGhostMode()">Exit Ghost Mode</button>`
+          : `<button class="btn btn-primary" onclick="enterGhostMode('${sess.id}')">Enter Ghost Mode</button>`
+        }
+        <button class="btn btn-secondary" onclick="renameSession('${sess.id}')">Rename</button>
+        <button class="btn btn-secondary" onclick="deleteSession('${sess.id}')">Delete</button>
       </div>
     `;
-  }).join('');
+
+    grid.appendChild(card);
+  });
 }
 
-window.selectGqlEndpoint = function(gId) {
-  selectedGqlEndpointId = gId;
-  renderGqlOperations();
-
-  const g = appState.schema.graphqlEndpoints.find((item) => item.id === gId);
-  if (!g) return;
-
-  document.getElementById('gqlEditorEmptyState').style.display = 'none';
-  document.getElementById('gqlEditorContent').style.display = 'block';
-
-  document.getElementById('editGqlType').innerText = g.operationType.toUpperCase();
-  document.getElementById('editGqlOpName').innerText = g.operationName;
-  document.getElementById('editGqlQueryText').innerText = g.queryText || `${g.operationType} ${g.operationName} { ... }`;
-
-  const body = g.defaultResponse?.body || { data: {} };
-  document.getElementById('editGqlBodyText').value = JSON.stringify(body, null, 2);
-
-  document.getElementById('btnSaveGqlEndpoint').onclick = () => {
-    try {
-      const parsedBody = JSON.parse(document.getElementById('editGqlBodyText').value);
-      const updatedGql = {
-        ...g,
-        defaultResponse: {
-          ...g.defaultResponse,
-          body: parsedBody
-        }
-      };
-
-      vscode.postMessage({
-        type: 'UPDATE_GRAPHQL_ENDPOINT',
-        payload: { endpoint: updatedGql }
-      });
-      alert('GraphQL mock response updated!');
-    } catch (err) {
-      alert('Invalid JSON in GraphQL response body: ' + err.message);
-    }
-  };
-};
-
-function renderScenariosTab() {
-  const currentScenario = appState.config.globalScenario || 'normal';
-  document.querySelectorAll('input[name="globalScenRadio"]').forEach((r) => {
-    r.checked = r.value === currentScenario;
-  });
-  document.querySelectorAll('.scenario-card').forEach((card) => {
-    card.classList.toggle('active', card.dataset.scen === currentScenario);
-  });
-
-  const checkLatency = document.getElementById('checkEnableLatency');
-  if (checkLatency) {
-    checkLatency.checked = Boolean(appState.config.latency?.enabled);
-  }
-  const minEl = document.getElementById('inputLatencyMin');
-  if (minEl) minEl.value = appState.config.latency?.min ?? 100;
-  const maxEl = document.getElementById('inputLatencyMax');
-  if (maxEl) maxEl.value = appState.config.latency?.max ?? 500;
+function enterGhostMode(id) {
+  vscode.postMessage({ type: 'ENTER_GHOST_MODE', payload: { sessionId: id } });
 }
 
-function renderSettings() {
-  const portEl = document.getElementById('inputServerPort');
-  if (portEl) portEl.value = appState.config.port || 4000;
+function exitGhostMode() {
+  vscode.postMessage({ type: 'EXIT_GHOST_MODE' });
+}
 
-  const redactionContainer = document.getElementById('redactionTags');
-  if (redactionContainer) {
-    const list = appState.config.redactHeaders || ['authorization', 'cookie', 'set-cookie', 'x-api-key'];
-    redactionContainer.innerHTML = list.map((h) => `<span class="tag-badge">${h}</span>`).join('');
+function renameSession(id) {
+  vscode.postMessage({ type: 'RENAME_GHOST_SESSION', payload: { sessionId: id } });
+}
+
+function deleteSession(id) {
+  vscode.postMessage({ type: 'DELETE_GHOST_SESSION', payload: { sessionId: id } });
+}
+
+function renderHistoryTab() {
+  const tbody = document.getElementById('historyTableBody');
+  const empty = document.getElementById('historyEmptyState');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+  const history = appState.serverHistory;
+
+  if (history.length === 0) {
+    empty.style.display = 'flex';
+    return;
   }
+
+  empty.style.display = 'none';
+
+  history.forEach(item => {
+    const tr = document.createElement('tr');
+    const time = new Date(item.timestamp).toLocaleTimeString();
+    
+    let statusClass = 'text-primary';
+    if (item.status >= 200 && item.status < 300) statusClass = 'success';
+    else if (item.status >= 400) statusClass = 'danger';
+
+    tr.innerHTML = `
+      <td style="color: var(--text-muted);">${time}</td>
+      <td><span class="badge badge-${item.method.toLowerCase()}">${item.method}</span></td>
+      <td style="font-family: var(--font-mono);">${item.path}</td>
+      <td class="${statusClass}">${item.status}</td>
+      <td>${item.durationMs}ms</td>
+      <td style="color: var(--text-secondary);">${item.scenario}</td>
+    `;
+    
+    tbody.appendChild(tr);
+  });
+}
+
+function renderSettingsTab() {
+  const port = document.getElementById('settingPort');
+  if (port) port.value = appState.config.port || 4000;
+  
+  const scenario = document.getElementById('settingGlobalScenario');
+  if (scenario) scenario.value = appState.config.globalScenario || 'normal';
+
+  const latency = document.getElementById('settingLatencyEnabled');
+  if (latency) latency.checked = appState.config.latency?.enabled || false;
 }

@@ -209,6 +209,86 @@ TRAFFICGHOST_URL=http://localhost:4000
         }
         return { framework: 'vanilla', name: 'Frontend Project' };
     }
+    saveGhostSession(session, rootPath) {
+        const tgDir = this.getTrafficGhostDir(rootPath);
+        const sessionsDir = path.join(tgDir, 'sessions');
+        if (!fs.existsSync(sessionsDir)) {
+            fs.mkdirSync(sessionsDir, { recursive: true });
+        }
+        const filePath = path.join(sessionsDir, `${session.id}.json`);
+        fs.writeFileSync(filePath, JSON.stringify(session, null, 2), 'utf-8');
+        output_channel_1.logger.info(`Saved Ghost Session: ${session.name} (${session.id}) to ${filePath}`);
+        return filePath;
+    }
+    loadGhostSessions(rootPath) {
+        const tgDir = this.getTrafficGhostDir(rootPath);
+        const sessionsDir = path.join(tgDir, 'sessions');
+        if (!fs.existsSync(sessionsDir)) {
+            return [];
+        }
+        try {
+            const files = fs.readdirSync(sessionsDir);
+            const sessions = [];
+            for (const file of files) {
+                if (file.endsWith('.json')) {
+                    try {
+                        const raw = fs.readFileSync(path.join(sessionsDir, file), 'utf-8');
+                        const session = JSON.parse(raw);
+                        if (session && session.id && session.name) {
+                            sessions.push(session);
+                        }
+                    }
+                    catch (e) {
+                        output_channel_1.logger.error(`Error loading session file ${file}`, e);
+                    }
+                }
+            }
+            return sessions.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        }
+        catch (e) {
+            output_channel_1.logger.error('Error scanning sessions directory', e);
+            return [];
+        }
+    }
+    loadGhostSession(id, rootPath) {
+        const tgDir = this.getTrafficGhostDir(rootPath);
+        const filePath = path.join(tgDir, 'sessions', `${id}.json`);
+        if (fs.existsSync(filePath)) {
+            try {
+                const raw = fs.readFileSync(filePath, 'utf-8');
+                return JSON.parse(raw);
+            }
+            catch (e) {
+                output_channel_1.logger.error(`Error loading session ${id}`, e);
+            }
+        }
+        return null;
+    }
+    deleteGhostSession(id, rootPath) {
+        const tgDir = this.getTrafficGhostDir(rootPath);
+        const filePath = path.join(tgDir, 'sessions', `${id}.json`);
+        if (fs.existsSync(filePath)) {
+            try {
+                fs.unlinkSync(filePath);
+                output_channel_1.logger.info(`Deleted Ghost Session: ${id}`);
+                return true;
+            }
+            catch (e) {
+                output_channel_1.logger.error(`Error deleting session ${id}`, e);
+            }
+        }
+        return false;
+    }
+    renameGhostSession(id, newName, rootPath) {
+        const session = this.loadGhostSession(id, rootPath);
+        if (session) {
+            session.name = newName;
+            session.updatedAt = new Date().toISOString();
+            this.saveGhostSession(session, rootPath);
+            return true;
+        }
+        return false;
+    }
 }
 exports.WorkspaceManager = WorkspaceManager;
 //# sourceMappingURL=workspace-manager.js.map

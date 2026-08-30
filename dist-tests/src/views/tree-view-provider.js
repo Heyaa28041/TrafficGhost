@@ -33,8 +33,9 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GraphQLEndpointsTreeProvider = exports.RestEndpointsTreeProvider = exports.ActionsTreeProvider = exports.StatusTreeProvider = exports.TrafficGhostTreeItem = void 0;
+exports.GhostSessionsTreeProvider = exports.GraphQLEndpointsTreeProvider = exports.RestEndpointsTreeProvider = exports.ActionsTreeProvider = exports.StatusTreeProvider = exports.TrafficGhostTreeItem = void 0;
 const vscode = __importStar(require("vscode"));
+const workspace_manager_1 = require("../storage/workspace-manager");
 class TrafficGhostTreeItem extends vscode.TreeItem {
     label;
     collapsibleState;
@@ -90,7 +91,10 @@ class StatusTreeProvider {
         const schema = this.serverManager.getSchema();
         const scenario = this.serverManager.getConfig().globalScenario;
         const capturedCount = this.getCapturedCount();
+        const isGhostMode = this.serverManager.isGhostMode();
+        const activeSession = this.serverManager.getActiveGhostSession();
         const items = [
+            new TrafficGhostTreeItem('Backend Mode', vscode.TreeItemCollapsibleState.None, isGhostMode ? `GHOST MODE (${activeSession ? activeSession.name : 'Unknown'})` : 'REAL BACKEND', isGhostMode ? 'ghost' : 'globe', 'trafficghost.openDashboard'),
             new TrafficGhostTreeItem('Recording', vscode.TreeItemCollapsibleState.None, isRecording ? '● Active' : '● Inactive', isRecording ? 'record' : 'circle-slash', 'trafficghost.openDashboard'),
             new TrafficGhostTreeItem('Captured Traffic', vscode.TreeItemCollapsibleState.None, `${capturedCount} requests`, 'arrow-swap', 'trafficghost.openDashboard'),
             new TrafficGhostTreeItem('REST Endpoints', vscode.TreeItemCollapsibleState.None, `${schema.restEndpoints.length} endpoints`, 'symbol-interface', 'trafficghost.openDashboard'),
@@ -192,4 +196,34 @@ class GraphQLEndpointsTreeProvider {
     }
 }
 exports.GraphQLEndpointsTreeProvider = GraphQLEndpointsTreeProvider;
+class GhostSessionsTreeProvider {
+    serverManager;
+    _onDidChangeTreeData = new vscode.EventEmitter();
+    onDidChangeTreeData = this._onDidChangeTreeData.event;
+    constructor(serverManager) {
+        this.serverManager = serverManager;
+        this.serverManager.on('ghostModeChanged', () => this.refresh());
+    }
+    refresh() {
+        this._onDidChangeTreeData.fire();
+    }
+    getTreeItem(element) {
+        return element;
+    }
+    getChildren() {
+        const sessions = workspace_manager_1.WorkspaceManager.getInstance().loadGhostSessions();
+        if (sessions.length === 0) {
+            return Promise.resolve([
+                new TrafficGhostTreeItem('No Ghost Sessions recorded', vscode.TreeItemCollapsibleState.None, 'Start a Ghost Session to begin', 'info')
+            ]);
+        }
+        const activeSession = this.serverManager.getActiveGhostSession();
+        const items = sessions.map((session) => {
+            const isActive = activeSession && activeSession.id === session.id;
+            return new TrafficGhostTreeItem(session.name, vscode.TreeItemCollapsibleState.None, `${isActive ? '★ Active' : ''} (${session.metadata.requestCount} reqs)`, isActive ? 'ghost' : 'history', 'trafficghost.openDashboard');
+        });
+        return Promise.resolve(items);
+    }
+}
+exports.GhostSessionsTreeProvider = GhostSessionsTreeProvider;
 //# sourceMappingURL=tree-view-provider.js.map

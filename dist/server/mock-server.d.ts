@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import { TrafficGhostMockSchema } from '../models/endpoint';
 import { TrafficGhostConfig } from '../models/config';
+import { GhostStateManager } from './ghost-state-manager';
 export interface ServerEventData {
     method: string;
     url: string;
@@ -19,6 +20,9 @@ export declare class TrafficGhostMockServer extends EventEmitter {
     private config;
     private isRunning;
     private port;
+    private ghostMode;
+    private ghostStateManager;
+    setGhostMode(enabled: boolean, stateManager?: GhostStateManager): void;
     constructor(schema: TrafficGhostMockSchema, config: TrafficGhostConfig);
     updateSchema(schema: TrafficGhostMockSchema): void;
     updateConfig(config: TrafficGhostConfig): void;
@@ -26,6 +30,7 @@ export declare class TrafficGhostMockServer extends EventEmitter {
     private registerRoutes;
     private registerGraphQLHandlers;
     private registerRestEndpoints;
+    private createDemoLoginEndpoint;
     private emitRequestEvent;
     start(): Promise<number>;
     stop(): Promise<void>;

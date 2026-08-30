@@ -46,3 +46,12 @@ export declare class GraphQLEndpointsTreeProvider implements vscode.TreeDataProv
     getTreeItem(element: TrafficGhostTreeItem): vscode.TreeItem;
     getChildren(): Thenable<TrafficGhostTreeItem[]>;
 }
+export declare class GhostSessionsTreeProvider implements vscode.TreeDataProvider<TrafficGhostTreeItem> {
+    private serverManager;
+    private _onDidChangeTreeData;
+    readonly onDidChangeTreeData: vscode.Event<void | TrafficGhostTreeItem | null | undefined>;
+    constructor(serverManager: ServerManager);
+    refresh(): void;
+    getTreeItem(element: TrafficGhostTreeItem): vscode.TreeItem;
+    getChildren(): Thenable<TrafficGhostTreeItem[]>;
+}

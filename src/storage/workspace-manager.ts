@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import { TrafficGhostConfig, DEFAULT_CONFIG } from '../models/config';
 import { TrafficGhostMockSchema } from '../models/endpoint';
 import { CapturedRequest } from '../models/captured-request';
+import { GhostSession } from '../models/ghost-session';
 import { BUILTIN_SCENARIOS } from '../models/scenario';
 import { logger } from '../logging/output-channel';
 
@@ -200,5 +201,88 @@ TRAFFICGHOST_URL=http://localhost:4000
     }
 
     return { framework: 'vanilla', name: 'Frontend Project' };
+  }
+
+  public saveGhostSession(session: GhostSession, rootPath?: string): string {
+    const tgDir = this.getTrafficGhostDir(rootPath);
+    const sessionsDir = path.join(tgDir, 'sessions');
+    if (!fs.existsSync(sessionsDir)) {
+      fs.mkdirSync(sessionsDir, { recursive: true });
+    }
+
+    const filePath = path.join(sessionsDir, `${session.id}.json`);
+    fs.writeFileSync(filePath, JSON.stringify(session, null, 2), 'utf-8');
+    logger.info(`Saved Ghost Session: ${session.name} (${session.id}) to ${filePath}`);
+    return filePath;
+  }
+
+  public loadGhostSessions(rootPath?: string): GhostSession[] {
+    const tgDir = this.getTrafficGhostDir(rootPath);
+    const sessionsDir = path.join(tgDir, 'sessions');
+    if (!fs.existsSync(sessionsDir)) {
+      return [];
+    }
+
+    try {
+      const files = fs.readdirSync(sessionsDir);
+      const sessions: GhostSession[] = [];
+      for (const file of files) {
+        if (file.endsWith('.json')) {
+          try {
+            const raw = fs.readFileSync(path.join(sessionsDir, file), 'utf-8');
+            const session = JSON.parse(raw) as GhostSession;
+            if (session && session.id && session.name) {
+              sessions.push(session);
+            }
+          } catch (e) {
+            logger.error(`Error loading session file ${file}`, e);
+          }
+        }
+      }
+      return sessions.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    } catch (e) {
+      logger.error('Error scanning sessions directory', e);
+      return [];
+    }
+  }
+
+  public loadGhostSession(id: string, rootPath?: string): GhostSession | null {
+    const tgDir = this.getTrafficGhostDir(rootPath);
+    const filePath = path.join(tgDir, 'sessions', `${id}.json`);
+    if (fs.existsSync(filePath)) {
+      try {
+        const raw = fs.readFileSync(filePath, 'utf-8');
+        return JSON.parse(raw) as GhostSession;
+      } catch (e) {
+        logger.error(`Error loading session ${id}`, e);
+      }
+    }
+    return null;
+  }
+
+  public deleteGhostSession(id: string, rootPath?: string): boolean {
+    const tgDir = this.getTrafficGhostDir(rootPath);
+    const filePath = path.join(tgDir, 'sessions', `${id}.json`);
+    if (fs.existsSync(filePath)) {
+      try {
+        fs.unlinkSync(filePath);
+        logger.info(`Deleted Ghost Session: ${id}`);
+        return true;
+      } catch (e) {
+        logger.error(`Error deleting session ${id}`, e);
+      }
+    }
+    return false;
+  }
+
+  public renameGhostSession(id: string, newName: string, rootPath?: string): boolean {
+    const session = this.loadGhostSession(id, rootPath);
+    if (session) {
+      session.name = newName;
+      session.updatedAt = new Date().toISOString();
+      this.saveGhostSession(session, rootPath);
+      return true;
+    }
+    return false;
   }
 }

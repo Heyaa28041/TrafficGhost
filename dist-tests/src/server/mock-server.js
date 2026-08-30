@@ -10,6 +10,7 @@ const events_1 = require("events");
 const scenario_engine_1 = require("./scenario-engine");
 const dynamic_handler_1 = require("./dynamic-handler");
 const graphql_analyzer_1 = require("../analyzer/graphql-analyzer");
+const ghost_state_manager_1 = require("./ghost-state-manager");
 const output_channel_1 = require("../logging/output-channel");
 class TrafficGhostMockServer extends events_1.EventEmitter {
     app;
@@ -18,6 +19,16 @@ class TrafficGhostMockServer extends events_1.EventEmitter {
     config;
     isRunning = false;
     port;
+    ghostMode = false;
+    ghostStateManager = null;
+    setGhostMode(enabled, stateManager) {
+        this.ghostMode = enabled;
+        this.ghostStateManager = stateManager || (enabled ? ghost_state_manager_1.GhostStateManager.getInstance() : null);
+        // Recreate Express app and routes dynamically to bind or unbind ghost state handlers
+        this.app = (0, express_1.default)();
+        this.setupMiddleware();
+        this.registerRoutes();
+    }
     constructor(schema, config) {
         super();
         this.schema = schema;
@@ -144,7 +155,10 @@ class TrafficGhostMockServer extends events_1.EventEmitter {
         }
     }
     registerRestEndpoints() {
-        for (const endpoint of this.schema.restEndpoints) {
+        const endpoints = this.schema.restEndpoints.some((endpoint) => endpoint.method === 'POST' && endpoint.pathPattern === '/api/login')
+            ? this.schema.restEndpoints
+            : [...this.schema.restEndpoints, this.createDemoLoginEndpoint()];
+        for (const endpoint of endpoints) {
             const expressMethod = endpoint.method.toLowerCase();
             if (typeof this.app[expressMethod] !== 'function')
                 continue;
@@ -165,14 +179,112 @@ class TrafficGhostMockServer extends events_1.EventEmitter {
                 await scenario_engine_1.ScenarioEngine.applyLatency(behavior.delayMs);
                 // 4. Handle error scenarios
                 if (behavior.statusCode >= 400) {
-                    const errBody = scenario_engine_1.ScenarioEngine.createErrorResponse(behavior.statusCode);
+                    const errorVariant = endpoint.responses.find((response) => response.statusCode === behavior.statusCode);
+                    const errBody = errorVariant
+                        ? dynamic_handler_1.DynamicHandler.generateDynamicResponse(endpoint, pathParams, queryParams, errorVariant.body)
+                        : scenario_engine_1.ScenarioEngine.createErrorResponse(behavior.statusCode);
                     const duration = Date.now() - startTime;
                     this.emitRequestEvent(req.method, req.url, req.path, behavior.statusCode, duration, behavior.scenarioApplied, 'REST');
                     res.status(behavior.statusCode).json(errBody);
                     return;
                 }
-                // 5. Select response variant based on query matching
-                const variant = dynamic_handler_1.DynamicHandler.selectResponseVariant(endpoint, queryParams);
+                // 4.5. Stateful CRUD in Ghost Mode
+                if (this.ghostMode && this.ghostStateManager && endpoint.pathPattern !== '/api/login') {
+                    const resourceKey = this.ghostStateManager.inferResourceKey(endpoint.pathPattern);
+                    if (resourceKey) {
+                        // Seed state on-demand if it hasn't been initialized yet
+                        if (!this.ghostStateManager.hasState(resourceKey)) {
+                            this.ghostStateManager.seedFromSchema(this.schema);
+                        }
+                        const idValue = pathParams.id || pathParams.userId || Object.values(pathParams)[0];
+                        const method = req.method.toUpperCase();
+                        if (method === 'GET') {
+                            if (endpoint.pathPattern.includes('/:')) {
+                                if (idValue !== undefined) {
+                                    const item = this.ghostStateManager.getById(resourceKey, idValue);
+                                    if (item) {
+                                        const duration = Date.now() - startTime;
+                                        this.emitRequestEvent(req.method, req.url, req.path, 200, duration, behavior.scenarioApplied, 'REST');
+                                        res.status(200).json(item);
+                                        return;
+                                    }
+                                    else {
+                                        const duration = Date.now() - startTime;
+                                        this.emitRequestEvent(req.method, req.url, req.path, 404, duration, behavior.scenarioApplied, 'REST');
+                                        res.status(404).json(scenario_engine_1.ScenarioEngine.createErrorResponse(404, `Resource ${resourceKey} with ID ${idValue} not found in state.`));
+                                        return;
+                                    }
+                                }
+                            }
+                            else {
+                                const items = this.ghostStateManager.getAll(resourceKey);
+                                const duration = Date.now() - startTime;
+                                this.emitRequestEvent(req.method, req.url, req.path, 200, duration, behavior.scenarioApplied, 'REST');
+                                res.status(200).json(items);
+                                return;
+                            }
+                        }
+                        else if (method === 'POST') {
+                            const created = this.ghostStateManager.create(resourceKey, req.body);
+                            const duration = Date.now() - startTime;
+                            this.emitRequestEvent(req.method, req.url, req.path, 201, duration, behavior.scenarioApplied, 'REST');
+                            res.status(201).json(created);
+                            return;
+                        }
+                        else if (method === 'PUT' || method === 'PATCH') {
+                            if (idValue !== undefined) {
+                                const updated = this.ghostStateManager.update(resourceKey, idValue, req.body);
+                                if (updated) {
+                                    const duration = Date.now() - startTime;
+                                    this.emitRequestEvent(req.method, req.url, req.path, 200, duration, behavior.scenarioApplied, 'REST');
+                                    res.status(200).json(updated);
+                                    return;
+                                }
+                                else {
+                                    const duration = Date.now() - startTime;
+                                    this.emitRequestEvent(req.method, req.url, req.path, 404, duration, behavior.scenarioApplied, 'REST');
+                                    res.status(404).json(scenario_engine_1.ScenarioEngine.createErrorResponse(404, `Resource ${resourceKey} with ID ${idValue} not found for update.`));
+                                    return;
+                                }
+                            }
+                        }
+                        else if (method === 'DELETE') {
+                            if (idValue !== undefined) {
+                                const success = this.ghostStateManager.delete(resourceKey, idValue);
+                                if (success) {
+                                    const duration = Date.now() - startTime;
+                                    this.emitRequestEvent(req.method, req.url, req.path, 204, duration, behavior.scenarioApplied, 'REST');
+                                    res.status(204).send();
+                                    return;
+                                }
+                                else {
+                                    const duration = Date.now() - startTime;
+                                    this.emitRequestEvent(req.method, req.url, req.path, 404, duration, behavior.scenarioApplied, 'REST');
+                                    res.status(404).json(scenario_engine_1.ScenarioEngine.createErrorResponse(404, `Resource ${resourceKey} with ID ${idValue} not found for deletion.`));
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+                // 5. Select response variant based on query/body matching
+                let variant = dynamic_handler_1.DynamicHandler.selectResponseVariant(endpoint, queryParams, req.body);
+                if (endpoint.method === 'POST' && endpoint.pathPattern === '/api/login' && behavior.statusCode === 200) {
+                    let loginBody = req.body;
+                    if (typeof loginBody === 'string') {
+                        try {
+                            loginBody = JSON.parse(loginBody);
+                        }
+                        catch {
+                            loginBody = undefined;
+                        }
+                    }
+                    const isValidLogin = loginBody &&
+                        loginBody.email === 'demo@example.com' &&
+                        loginBody.password === 'demo-password';
+                    const loginStatus = !loginBody || !loginBody.email || !loginBody.password ? 400 : isValidLogin ? 200 : 401;
+                    variant = endpoint.responses.find((response) => response.statusCode === loginStatus) || variant;
+                }
                 // 6. Generate dynamic response (interpolate params & pagination)
                 const finalBody = dynamic_handler_1.DynamicHandler.generateDynamicResponse(endpoint, pathParams, queryParams, variant.body, behavior.emptyPayload);
                 // 7. Send headers from captured response
@@ -188,7 +300,9 @@ class TrafficGhostMockServer extends events_1.EventEmitter {
                         }
                     }
                 }
-                const finalStatus = behavior.statusCode || variant.statusCode || 200;
+                const finalStatus = behavior.statusCode === 200
+                    ? variant.statusCode || 200
+                    : behavior.statusCode;
                 const duration = Date.now() - startTime;
                 this.emitRequestEvent(req.method, req.url, req.path, finalStatus, duration, behavior.scenarioApplied, 'REST');
                 if (typeof finalBody === 'object' && finalBody !== null) {
@@ -199,6 +313,53 @@ class TrafficGhostMockServer extends events_1.EventEmitter {
                 }
             });
         }
+    }
+    createDemoLoginEndpoint() {
+        const response = (statusCode, body, id) => ({
+            id,
+            statusCode,
+            headers: { 'content-type': 'application/json' },
+            body
+        });
+        return {
+            id: 'rest_post_api_login_builtin_demo',
+            method: 'POST',
+            pathPattern: '/api/login',
+            rawPaths: ['/api/login'],
+            parameters: [],
+            queryParameters: [],
+            responses: [
+                response(200, {
+                    success: true,
+                    user: { id: 1, name: 'Demo Developer', email: 'demo@example.com', role: 'Developer' },
+                    token: 'demo-token'
+                }, 'login_200'),
+                response(400, {
+                    error: 'VALIDATION_ERROR',
+                    message: 'Email and password are required'
+                }, 'login_400'),
+                response(401, {
+                    error: 'INVALID_CREDENTIALS',
+                    message: 'Invalid email or password'
+                }, 'login_401'),
+                response(429, {
+                    error: 'RATE_LIMITED',
+                    message: 'Too many login attempts',
+                    retryAfter: 30
+                }, 'login_429'),
+                response(500, {
+                    error: 'INTERNAL_ERROR',
+                    message: 'Authentication service temporarily unavailable'
+                }, 'login_500')
+            ],
+            defaultResponse: response(200, {
+                success: true,
+                user: { id: 1, name: 'Demo Developer', email: 'demo@example.com', role: 'Developer' },
+                token: 'demo-token'
+            }, 'login_200'),
+            requestCount: 0,
+            sampleRequests: []
+        };
     }
     emitRequestEvent(method, url, path, status, durationMs, scenario, type, operationName) {
         const eventData = {

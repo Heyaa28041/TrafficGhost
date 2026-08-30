@@ -54,6 +54,10 @@
         {
           "id": "trafficghost.graphqlOperationsView",
           "name": "GraphQL Operations"
+        },
+        {
+          "id": "trafficghost.ghostSessionsView",
+          "name": "Ghost Sessions"
         }
       ]
     },
@@ -129,6 +133,78 @@
         "title": "TrafficGhost: Clear Recording",
         "category": "TrafficGhost",
         "icon": "$(trash)"
+      },
+      {
+        "command": "trafficghost.startGhostSession",
+        "title": "TrafficGhost: Start Ghost Session",
+        "category": "TrafficGhost",
+        "icon": "$(play-circle)"
+      },
+      {
+        "command": "trafficghost.stopGhostSession",
+        "title": "TrafficGhost: Stop Ghost Session",
+        "category": "TrafficGhost",
+        "icon": "$(stop-circle)"
+      },
+      {
+        "command": "trafficghost.enterGhostMode",
+        "title": "TrafficGhost: Enter Ghost Mode",
+        "category": "TrafficGhost",
+        "icon": "$(ghost)"
+      },
+      {
+        "command": "trafficghost.exitGhostMode",
+        "title": "TrafficGhost: Exit Ghost Mode",
+        "category": "TrafficGhost",
+        "icon": "$(signOut)"
+      },
+      {
+        "command": "trafficghost.deleteSession",
+        "title": "TrafficGhost: Delete Session",
+        "category": "TrafficGhost",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "trafficghost.renameSession",
+        "title": "TrafficGhost: Rename Session",
+        "category": "TrafficGhost",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "trafficghost.generateTypes",
+        "title": "TrafficGhost: Generate TypeScript Types",
+        "category": "TrafficGhost",
+        "icon": "$(symbol-class)"
+      },
+      {
+        "command": "trafficghost.generateClient",
+        "title": "TrafficGhost: Generate API Client Code",
+        "category": "TrafficGhost",
+        "icon": "$(symbol-function)"
+      },
+      {
+        "command": "trafficghost.generateTest",
+        "title": "TrafficGhost: Generate API Integration Test",
+        "category": "TrafficGhost",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "trafficghost.generateDocs",
+        "title": "TrafficGhost: Generate API Documentation",
+        "category": "TrafficGhost",
+        "icon": "$(book)"
+      },
+      {
+        "command": "trafficghost.diffContracts",
+        "title": "TrafficGhost: Compare Session Contracts",
+        "category": "TrafficGhost",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "trafficghost.findApiUsage",
+        "title": "TrafficGhost: Find API Usage",
+        "category": "TrafficGhost",
+        "icon": "$(search)"
       }
     ],
     "menus": {

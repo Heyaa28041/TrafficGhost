@@ -91,6 +91,9 @@ export class TrafficAnalyzer {
             headers: mReq.response.headers || { 'content-type': 'application/json' },
             body: mReq.response.body !== undefined ? mReq.response.body : {},
             matchQuery: Object.keys(queryStrMap).length > 0 ? queryStrMap : undefined,
+            matchBody: mReq.body !== undefined && mReq.body !== null && typeof mReq.body === 'object' && !Array.isArray(mReq.body)
+              ? (mReq.body as Record<string, unknown>)
+              : undefined,
             isDefault: i === 0
           });
         }

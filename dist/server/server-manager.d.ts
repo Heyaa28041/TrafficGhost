@@ -3,12 +3,15 @@ import { ServerEventData } from './mock-server';
 import { TrafficGhostMockSchema } from '../models/endpoint';
 import { TrafficGhostConfig } from '../models/config';
 import { ScenarioType } from '../models/scenario';
+import { GhostSession } from '../models/ghost-session';
 export declare class ServerManager extends EventEmitter {
     private static instance;
     private mockServer;
     private currentSchema;
     private currentConfig;
     private requestHistory;
+    private ghostMode;
+    private activeGhostSession;
     private constructor();
     static getInstance(): ServerManager;
     setSchema(schema: TrafficGhostMockSchema): void;
@@ -22,4 +25,9 @@ export declare class ServerManager extends EventEmitter {
     getPort(): number;
     getRequestHistory(): ServerEventData[];
     clearRequestHistory(): void;
+    enterGhostMode(session: GhostSession): void;
+    exitGhostMode(): void;
+    isGhostMode(): boolean;
+    getActiveGhostSession(): GhostSession | null;
+    getGhostState(): Record<string, unknown[]>;
 }

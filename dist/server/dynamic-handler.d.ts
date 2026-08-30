@@ -3,7 +3,7 @@ export declare class DynamicHandler {
     /**
      * Selects the best matching response variant based on request query parameters.
      */
-    static selectResponseVariant(endpoint: RestEndpointDefinition, requestQuery: Record<string, string>): MockResponseVariant;
+    static selectResponseVariant(endpoint: RestEndpointDefinition, requestQuery: Record<string, string>, reqBody?: any): MockResponseVariant;
     /**
      * Generates a realistic dynamic response by replacing path parameters and applying pagination.
      */

@@ -29,6 +29,7 @@ export interface MockResponseVariant {
   headers: Record<string, string>;
   body: unknown;
   matchQuery?: Record<string, string>;
+  matchBody?: Record<string, unknown>;
   isDefault?: boolean;
 }
 

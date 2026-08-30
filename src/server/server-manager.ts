@@ -3,6 +3,8 @@ import { TrafficGhostMockServer, ServerEventData } from './mock-server';
 import { TrafficGhostMockSchema } from '../models/endpoint';
 import { TrafficGhostConfig, DEFAULT_CONFIG } from '../models/config';
 import { ScenarioType } from '../models/scenario';
+import { GhostSession } from '../models/ghost-session';
+import { GhostStateManager } from './ghost-state-manager';
 import { logger } from '../logging/output-channel';
 
 export class ServerManager extends EventEmitter {
@@ -11,6 +13,8 @@ export class ServerManager extends EventEmitter {
   private currentSchema: TrafficGhostMockSchema;
   private currentConfig: TrafficGhostConfig;
   private requestHistory: ServerEventData[] = [];
+  private ghostMode: boolean = false;
+  private activeGhostSession: GhostSession | null = null;
 
   private constructor() {
     super();
@@ -76,6 +80,10 @@ export class ServerManager extends EventEmitter {
 
     this.mockServer = new TrafficGhostMockServer(this.currentSchema, this.currentConfig);
 
+    if (this.ghostMode) {
+      this.mockServer.setGhostMode(true, GhostStateManager.getInstance());
+    }
+
     this.mockServer.on('request', (event: ServerEventData) => {
       this.requestHistory.unshift(event);
       if (this.requestHistory.length > 200) {
@@ -120,5 +128,48 @@ export class ServerManager extends EventEmitter {
   public clearRequestHistory(): void {
     this.requestHistory = [];
     this.emit('historyCleared');
+  }
+
+  public enterGhostMode(session: GhostSession): void {
+    this.ghostMode = true;
+    this.activeGhostSession = session;
+    this.setSchema(session.schema);
+    
+    // Seed in-memory database state
+    GhostStateManager.getInstance().seedFromSchema(session.schema);
+    
+    if (this.mockServer) {
+      this.mockServer.setGhostMode(true, GhostStateManager.getInstance());
+    }
+    
+    logger.info(`Entered Ghost Mode with session: ${session.name}`);
+    this.emit('ghostModeChanged', { enabled: true, session });
+    this.emit('stateChanged');
+  }
+
+  public exitGhostMode(): void {
+    this.ghostMode = false;
+    this.activeGhostSession = null;
+    GhostStateManager.getInstance().reset();
+    
+    if (this.mockServer) {
+      this.mockServer.setGhostMode(false);
+    }
+    
+    logger.info('Exited Ghost Mode');
+    this.emit('ghostModeChanged', { enabled: false });
+    this.emit('stateChanged');
+  }
+
+  public isGhostMode(): boolean {
+    return this.ghostMode;
+  }
+
+  public getActiveGhostSession(): GhostSession | null {
+    return this.activeGhostSession;
+  }
+
+  public getGhostState(): Record<string, unknown[]> {
+    return GhostStateManager.getInstance().getSnapshot();
   }
 }

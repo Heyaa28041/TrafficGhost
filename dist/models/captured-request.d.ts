@@ -38,3 +38,11 @@ export interface RequestTiming {
  * Utility to redact sensitive headers
  */
 export declare function redactHeaders(headers: Record<string, string>, redactList?: string[]): Record<string, string>;
+export declare function detectSensitiveData(req: {
+    headers: Record<string, string>;
+    body?: any;
+    response: {
+        headers: Record<string, string>;
+        body?: any;
+    };
+}): boolean;

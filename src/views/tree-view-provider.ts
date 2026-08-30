@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { ServerManager } from '../server/server-manager';
 import { BrowserRecorder } from '../recorder/browser-recorder';
 import { RestEndpointDefinition, GraphQLEndpointDefinition } from '../models/endpoint';
+import { WorkspaceManager } from '../storage/workspace-manager';
 
 export class TrafficGhostTreeItem extends vscode.TreeItem {
   constructor(
@@ -54,8 +55,17 @@ export class StatusTreeProvider implements vscode.TreeDataProvider<TrafficGhostT
     const schema = this.serverManager.getSchema();
     const scenario = this.serverManager.getConfig().globalScenario;
     const capturedCount = this.getCapturedCount();
+    const isGhostMode = this.serverManager.isGhostMode();
+    const activeSession = this.serverManager.getActiveGhostSession();
 
     const items: TrafficGhostTreeItem[] = [
+      new TrafficGhostTreeItem(
+        'Backend Mode',
+        vscode.TreeItemCollapsibleState.None,
+        isGhostMode ? `GHOST MODE (${activeSession ? activeSession.name : 'Unknown'})` : 'REAL BACKEND',
+        isGhostMode ? 'ghost' : 'globe',
+        'trafficghost.openDashboard'
+      ),
       new TrafficGhostTreeItem(
         'Recording',
         vscode.TreeItemCollapsibleState.None,
@@ -268,6 +278,52 @@ export class GraphQLEndpointsTreeProvider implements vscode.TreeDataProvider<Tra
         icon,
         'trafficghost.openEndpoint',
         [g.id]
+      );
+    });
+
+    return Promise.resolve(items);
+  }
+}
+
+export class GhostSessionsTreeProvider implements vscode.TreeDataProvider<TrafficGhostTreeItem> {
+  private _onDidChangeTreeData = new vscode.EventEmitter<TrafficGhostTreeItem | undefined | null | void>();
+  readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
+
+  constructor(private serverManager: ServerManager) {
+    this.serverManager.on('ghostModeChanged', () => this.refresh());
+  }
+
+  public refresh(): void {
+    this._onDidChangeTreeData.fire();
+  }
+
+  getTreeItem(element: TrafficGhostTreeItem): vscode.TreeItem {
+    return element;
+  }
+
+  getChildren(): Thenable<TrafficGhostTreeItem[]> {
+    const sessions = WorkspaceManager.getInstance().loadGhostSessions();
+    if (sessions.length === 0) {
+      return Promise.resolve([
+        new TrafficGhostTreeItem(
+          'No Ghost Sessions recorded',
+          vscode.TreeItemCollapsibleState.None,
+          'Start a Ghost Session to begin',
+          'info'
+        )
+      ]);
+    }
+
+    const activeSession = this.serverManager.getActiveGhostSession();
+
+    const items = sessions.map((session) => {
+      const isActive = activeSession && activeSession.id === session.id;
+      return new TrafficGhostTreeItem(
+        session.name,
+        vscode.TreeItemCollapsibleState.None,
+        `${isActive ? '★ Active' : ''} (${session.metadata.requestCount} reqs)`,
+        isActive ? 'ghost' : 'history',
+        'trafficghost.openDashboard'
       );
     });
 

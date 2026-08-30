@@ -5,14 +5,48 @@ class DynamicHandler {
     /**
      * Selects the best matching response variant based on request query parameters.
      */
-    static selectResponseVariant(endpoint, requestQuery) {
+    static selectResponseVariant(endpoint, requestQuery, reqBody) {
         if (!endpoint.responses || endpoint.responses.length === 0) {
             return endpoint.defaultResponse;
         }
         if (endpoint.responses.length === 1) {
             return endpoint.responses[0];
         }
-        // Try matching query parameters
+        let normalizedBody = reqBody;
+        if (typeof reqBody === 'string') {
+            try {
+                normalizedBody = JSON.parse(reqBody);
+            }
+            catch {
+                normalizedBody = reqBody;
+            }
+        }
+        // 1. Try matching request body fields (for POST/PUT/PATCH mutations)
+        if (normalizedBody && typeof normalizedBody === 'object') {
+            for (const variant of endpoint.responses) {
+                if (!variant.matchBody)
+                    continue;
+                const matchKeys = Object.keys(variant.matchBody);
+                if (matchKeys.length === 0 && Object.keys(normalizedBody).length > 0)
+                    continue;
+                let bodyMatch = true;
+                for (const [k, v] of Object.entries(variant.matchBody)) {
+                    if (JSON.stringify(normalizedBody[k]) !== JSON.stringify(v)) {
+                        bodyMatch = false;
+                        break;
+                    }
+                }
+                if (bodyMatch) {
+                    return variant;
+                }
+            }
+        }
+        if (!normalizedBody || (typeof normalizedBody === 'object' && Object.keys(normalizedBody).length === 0)) {
+            const emptyBodyVariant = endpoint.responses.find((variant) => variant.matchBody && Object.keys(variant.matchBody).length === 0);
+            if (emptyBodyVariant)
+                return emptyBodyVariant;
+        }
+        // 2. Try matching query parameters
         for (const variant of endpoint.responses) {
             if (!variant.matchQuery || Object.keys(variant.matchQuery).length === 0)
                 continue;

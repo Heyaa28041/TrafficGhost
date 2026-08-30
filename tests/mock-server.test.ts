@@ -131,6 +131,89 @@ describe('Mock Server End-to-End Dynamic Behavior', () => {
     assert.ok(res.body.data.users);
   });
 
+  it('should authenticate the demo login request with the captured contract', async () => {
+    const res = await makeRequest(TEST_PORT, 'POST', '/api/login', {
+      email: 'demo@example.com',
+      password: 'demo-password'
+    });
+    assert.strictEqual(res.status, 200);
+    assert.deepStrictEqual(res.body, {
+      success: true,
+      user: {
+        id: 1,
+        name: 'Demo Developer',
+        email: 'demo@example.com',
+        role: 'Developer'
+      },
+      token: 'demo-token'
+    });
+  });
+
+  it('should return 400 for missing login fields', async () => {
+    const res = await makeRequest(TEST_PORT, 'POST', '/api/login', { email: 'demo@example.com' });
+    assert.strictEqual(res.status, 400);
+    assert.deepStrictEqual(res.body, {
+      error: 'VALIDATION_ERROR',
+      message: 'Email and password are required'
+    });
+  });
+
+  it('should return 401 for invalid login credentials', async () => {
+    const res = await makeRequest(TEST_PORT, 'POST', '/api/login', {
+      email: 'someone@example.com',
+      password: 'not-the-demo-password'
+    });
+    assert.strictEqual(res.status, 401);
+    assert.deepStrictEqual(res.body, {
+      error: 'INVALID_CREDENTIALS',
+      message: 'Invalid email or password'
+    });
+  });
+
+  it('should return the captured 429 login response in rate-limited mode', async () => {
+    config.globalScenario = 'rate-limited';
+    server.updateConfig(config);
+    const res = await makeRequest(TEST_PORT, 'POST', '/api/login', {
+      email: 'demo@example.com',
+      password: 'demo-password'
+    });
+    assert.strictEqual(res.status, 429);
+    assert.deepStrictEqual(res.body, {
+      error: 'RATE_LIMITED',
+      message: 'Too many login attempts',
+      retryAfter: 30
+    });
+    config.globalScenario = 'normal';
+    server.updateConfig(config);
+  });
+
+  it('should return the captured 500 login response in server-error mode', async () => {
+    config.globalScenario = 'server-error';
+    server.updateConfig(config);
+    const res = await makeRequest(TEST_PORT, 'POST', '/api/login', {
+      email: 'demo@example.com',
+      password: 'demo-password'
+    });
+    assert.strictEqual(res.status, 500);
+    assert.deepStrictEqual(res.body, {
+      error: 'INTERNAL_ERROR',
+      message: 'Authentication service temporarily unavailable'
+    });
+    config.globalScenario = 'normal';
+    server.updateConfig(config);
+  });
+
+  it('should preserve login responses in Ghost Mode', async () => {
+    server.setGhostMode(true);
+    const res = await makeRequest(TEST_PORT, 'POST', '/api/login', {
+      email: 'demo@example.com',
+      password: 'demo-password'
+    });
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.token, 'demo-token');
+    server.setGhostMode(false);
+  });
+
   it('should simulate Slow Network scenario with latency >= 500ms', async () => {
     config.globalScenario = 'slow-network';
     server.updateConfig(config);

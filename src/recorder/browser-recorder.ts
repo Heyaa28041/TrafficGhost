@@ -79,15 +79,18 @@ export class BrowserRecorder extends EventEmitter {
     // 2. If no Chrome is running, attempt to launch Chrome with remote debugging
     if (!target) {
       logger.info('No running Chrome DevTools instance found. Launching Chrome with remote debugging...');
-      await this.launchChrome(targetUrl);
-      // Wait for Chrome to spin up DevTools port
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      target = await this.findCdpTarget();
+      try {
+        await this.launchChrome(targetUrl);
+        // Wait for Chrome to spin up DevTools port
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        target = await this.findCdpTarget();
+      } catch (err) {
+        throw new Error('Chrome executable not found');
+      }
     }
 
     if (!target || !target.webSocketDebuggerUrl) {
-      logger.error('Could not connect to Chrome DevTools Protocol. Make sure Chrome is installed or launch it with --remote-debugging-port=9222.');
-      throw new Error('Could not connect to Chrome DevTools Protocol on port ' + this.cdpPort);
+      throw new Error('CDP unavailable');
     }
 
     // 3. Connect via WebSocket to DevTools target
@@ -192,6 +195,7 @@ export class BrowserRecorder extends EventEmitter {
       url
     ];
 
+    let launched = false;
     for (const binPath of candidatePaths) {
       try {
         const proc = child_process.spawn(binPath, chromeArgs, {
@@ -200,10 +204,15 @@ export class BrowserRecorder extends EventEmitter {
         });
         proc.unref();
         this.browserProcess = proc;
+        launched = true;
         return;
       } catch {
         continue;
       }
+    }
+
+    if (!launched) {
+      throw new Error('Chrome executable not found');
     }
   }
 

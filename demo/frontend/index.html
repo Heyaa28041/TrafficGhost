@@ -3,247 +3,367 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Acme Dashboard - Frontend Demo (TrafficGhost Powered)</title>
+  <title>Nexus Platform - Enterprise Console</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="app-wrapper">
-    <!-- Topbar -->
-    <header class="topbar">
-      <div class="brand">
-        <span class="logo">⚡</span>
-        <div>
-          <h1>Acme Commerce Portal</h1>
-          <span class="sub">Frontend App running against TrafficGhost Local Mock Server</span>
+  <div class="app-layout">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <span class="logo-text">Nexus Console</span>
         </div>
       </div>
 
-      <!-- Backend Connection Pill -->
-      <div class="backend-controls">
-        <div class="conn-badge">
-          <span class="dot live"></span>
-          <span id="backendTargetLabel">Mock API: http://localhost:4000</span>
+      <nav class="nav-menu">
+        <button class="nav-item active" data-view="dashboard">Dashboard</button>
+        <button class="nav-item" data-view="users">User Directory</button>
+        <button class="nav-item" data-view="products">Product Catalog</button>
+        <button class="nav-item" data-view="orders">Order Register</button>
+        <button class="nav-item" data-view="analytics">System Metrics</button>
+        <button class="nav-item" data-view="settings">Console Settings</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="system-status">
+          <span class="status-indicator-dot" id="systemStatusDot"></span>
+          <span id="systemStatusText">Connecting...</span>
         </div>
         <div class="latency-timer" id="latencyIndicator">Latency: 0ms</div>
       </div>
-    </header>
+    </aside>
 
-    <!-- Main Grid -->
-    <div class="main-layout">
-      <!-- Sidebar Navigation -->
-      <aside class="sidebar">
-        <nav class="nav-menu">
-          <button class="nav-item active" data-view="users">
-            <span class="icon">👥</span> Users
-          </button>
-          <button class="nav-item" data-view="products">
-            <span class="icon">📦</span> Products (Paginated)
-          </button>
-          <button class="nav-item" data-view="orders">
-            <span class="icon">📑</span> Orders
-          </button>
-          <button class="nav-item" data-view="graphql">
-            <span class="icon">🔮</span> GraphQL Studio
-          </button>
-          <button class="nav-item" data-view="scenarios">
-            <span class="icon">🧪</span> Scenario Tester
-          </button>
-        </nav>
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Top Info Banner (for resilience displays, e.g. 401/429/500 errors) -->
+      <div id="globalErrorBanner" class="error-banner" style="display: none;">
+        <span id="errorBannerMessage">An error occurred while connecting to the system api.</span>
+        <button id="btnRetryBanner" class="btn btn-secondary btn-sm">Retry Request</button>
+      </div>
 
-        <div class="sidebar-footer">
-          <div class="ghost-badge">
-            <span>👻</span>
-            <div>
-              <strong>TrafficGhost</strong>
-              <small>Zero-Backend Frontend Dev</small>
+      <!-- Authentication -->
+      <section id="view-login" class="view-panel active login-panel">
+        <div class="login-card">
+          <div class="view-header">
+            <h1>Sign in to Nexus</h1>
+            <p>Access the enterprise operations console.</p>
+          </div>
+          <form id="loginForm" novalidate>
+            <div class="form-group">
+              <label for="loginEmail">Email</label>
+              <input type="email" id="loginEmail" class="input-text" autocomplete="email" required>
             </div>
-          </div>
+            <div class="form-group">
+              <label for="loginPassword">Password</label>
+              <input type="password" id="loginPassword" class="input-text" autocomplete="current-password" required>
+            </div>
+            <p id="loginMessage" class="login-message" role="alert" aria-live="polite"></p>
+            <button type="submit" id="loginSubmit" class="btn btn-primary login-submit">Sign In</button>
+          </form>
         </div>
-      </aside>
+      </section>
 
-      <!-- Content Area -->
-      <main class="content-area">
-        <!-- Error Alert Banner -->
-        <div class="error-banner" id="globalErrorBanner" style="display: none;">
-          <div class="error-text">
-            <strong id="errorStatusText">Error 500: Server Error</strong>
-            <span id="errorMessageText">Simulated backend error response</span>
-          </div>
-          <button class="btn btn-sm btn-retry" id="btnRetry">Retry Request</button>
+      <!-- Page 1: Dashboard -->
+      <section id="view-dashboard" class="view-panel">
+        <div class="view-header">
+          <h1>Nexus Dashboard</h1>
+          <p>Real-time analytics and statistics overview.</p>
         </div>
 
-        <!-- 1. USERS VIEW -->
-        <section id="view-users" class="view-panel active">
-          <div class="panel-header">
-            <div>
-              <h2>Team & Users Management</h2>
-              <p>Testing <code>GET /api/users</code> and dynamic parameterized route <code>GET /api/users/:id</code></p>
-            </div>
-            <button class="btn btn-primary" id="btnReloadUsers">Refresh Users</button>
+        <div class="dashboard-stats-grid">
+          <div class="stat-card">
+            <span class="stat-title">Active Platform Users</span>
+            <span class="stat-number" id="statUsersCount">-</span>
           </div>
-
-          <!-- Dynamic ID Test Box -->
-          <div class="card-highlight">
-            <div class="highlight-header">
-              <strong>Dynamic Route Parameter Test: <code>GET /api/users/:id</code></strong>
-            </div>
-            <div class="dynamic-id-bar">
-              <button class="btn-chip" onclick="fetchUserDetail(1)">User 1 (Alice)</button>
-              <button class="btn-chip" onclick="fetchUserDetail(2)">User 2 (Bob)</button>
-              <button class="btn-chip" onclick="fetchUserDetail(3)">User 3 (Charlie)</button>
-              <button class="btn-chip btn-chip-accent" onclick="fetchUserDetail(999)">✨ User 999 (Unseen Dynamic ID)</button>
-              <div class="input-id-group">
-                <input type="number" id="inputCustomUserId" placeholder="Custom ID" value="777" />
-                <button class="btn btn-sm btn-secondary" onclick="fetchCustomUser()">Fetch ID</button>
-              </div>
-            </div>
+          <div class="stat-card">
+            <span class="stat-title">Completed Orders</span>
+            <span class="stat-number" id="statOrdersCount">-</span>
           </div>
-
-          <!-- User Detail Modal/Card -->
-          <div class="detail-card" id="userDetailCard" style="display: none;">
-            <div class="detail-header">
-              <h3 id="detailUserName">User Details</h3>
-              <button class="btn-close" onclick="closeUserDetail()">✕</button>
-            </div>
-            <div class="detail-body">
-              <pre class="json-code"><code id="detailUserJson"></code></pre>
-            </div>
+          <div class="stat-card">
+            <span class="stat-title">Gross Merchant Volume</span>
+            <span class="stat-number" id="statRevenue">-</span>
           </div>
+        </div>
 
-          <!-- Users List Table -->
+        <div class="view-body">
           <div class="card">
-            <div class="skeleton-loader" id="usersSkeleton" style="display: none;">
-              <div class="skel-row"></div>
-              <div class="skel-row"></div>
-              <div class="skel-row"></div>
+            <h2>Recent Activity Feed</h2>
+            <div class="skeleton-loader" id="activityFeedSkeleton">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
             </div>
-            <div class="table-responsive" id="usersTableWrap">
+            <ul class="activity-list" id="activityList" style="display: none;">
+              <!-- GraphQL User activity items -->
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Page 2: Users Directory -->
+      <section id="view-users" class="view-panel">
+        <div class="view-header justify-header">
+          <div>
+            <h1>User Directory</h1>
+            <p>Manage console access and system user profiles.</p>
+          </div>
+          <div style="display:flex; gap: 8px; align-items:center;">
+            <input type="text" id="searchUsersInput" placeholder="Search name/email..." class="input-text" style="width:200px; padding:6px 12px; font-size:13px; border-radius:4px; border:1px solid var(--border-color); background-color:var(--bg-secondary); color:var(--text-primary);">
+            <select id="filterUsersRole" class="select-box" style="padding:6px 12px; font-size:13px; border-radius:4px; border:1px solid var(--border-color); background-color:var(--bg-secondary); color:var(--text-primary); cursor:pointer;">
+              <option value="all">All Roles</option>
+              <option value="Administrator">Administrator</option>
+              <option value="Operator">Operator</option>
+              <option value="Viewer">Viewer</option>
+            </select>
+            <button id="btnCreateUserModal" class="btn btn-primary">Add Member</button>
+          </div>
+        </div>
+
+        <div class="view-body">
+          <div class="card">
+            <div class="skeleton-loader" id="usersTableSkeleton">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+            </div>
+            <div class="table-wrapper" id="usersTableWrapper" style="display: none;">
               <table class="data-table">
                 <thead>
                   <tr>
                     <th>ID</th>
                     <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
+                    <th>Email Address</th>
+                    <th>Access Role</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
-                <tbody id="usersTableBody"></tbody>
+                <tbody id="usersTableBody">
+                  <!-- REST GET /api/users -->
+                </tbody>
               </table>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <!-- 2. PRODUCTS VIEW -->
-        <section id="view-products" class="view-panel">
-          <div class="panel-header">
-            <div>
-              <h2>Products Catalog</h2>
-              <p>Testing dynamic query pagination: <code>GET /api/products?page=1&limit=5</code></p>
-            </div>
-            <div class="pagination-controls">
-              <button class="btn btn-secondary btn-sm" id="btnPrevPage">← Prev Page</button>
-              <span class="page-indicator" id="pageIndicator">Page 1 of 2</span>
-              <button class="btn btn-secondary btn-sm" id="btnNextPage">Next Page →</button>
-            </div>
-          </div>
+      <!-- Page 3: Products Catalog -->
+      <section id="view-products" class="view-panel">
+        <div class="view-header">
+          <h1>Product Catalog</h1>
+          <p>Paginated inventory lookup.</p>
+        </div>
 
-          <div class="products-grid" id="productsGrid"></div>
-        </section>
-
-        <!-- 3. ORDERS VIEW -->
-        <section id="view-orders" class="view-panel">
-          <div class="panel-header">
-            <div>
-              <h2>Orders & Fulfillment</h2>
-              <p>Testing <code>GET /api/orders</code></p>
-            </div>
-            <button class="btn btn-primary" id="btnReloadOrders">Refresh Orders</button>
-          </div>
-
+        <div class="view-body">
           <div class="card">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Customer</th>
-                  <th>Total Amount</th>
-                  <th>Status</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody id="ordersTableBody"></tbody>
-            </table>
-          </div>
-        </section>
-
-        <!-- 4. GRAPHQL VIEW -->
-        <section id="view-graphql" class="view-panel">
-          <div class="panel-header">
-            <div>
-              <h2>GraphQL Operations Studio</h2>
-              <p>Testing <code>POST /graphql</code> matching operations <code>GetUsers</code>, <code>GetUserById</code>, and <code>CreateUser</code></p>
+            <div class="skeleton-loader" id="productsSkeleton">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
             </div>
-          </div>
-
-          <div class="graphql-layout">
-            <div class="gql-sidebar">
-              <h3>Operations</h3>
-              <button class="gql-op-btn active" onclick="runGqlQuery('GetUsers')">
-                <span class="badge query">QUERY</span> GetUsers
-              </button>
-              <button class="gql-op-btn" onclick="runGqlQuery('GetUserById', { id: '1' })">
-                <span class="badge query">QUERY</span> GetUserById ($id: "1")
-              </button>
-              <button class="gql-op-btn" onclick="runGqlQuery('GetProductCatalog')">
-                <span class="badge query">QUERY</span> GetProductCatalog
-              </button>
-              <button class="gql-op-btn" onclick="runGqlQuery('CreateUser', { name: 'Sarah Connor', email: 'sarah@skynet.ai' })">
-                <span class="badge mut">MUTATION</span> CreateUser
-              </button>
-            </div>
-
-            <div class="gql-viewer">
-              <div class="gql-code-box">
-                <h4>Response Payload</h4>
-                <pre class="json-code"><code id="gqlResponseViewer">// Click an operation to execute</code></pre>
+            <div id="productsWrapper" style="display: none;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>SKU Name</th>
+                    <th>Category</th>
+                    <th>Unit Price</th>
+                  </tr>
+                </thead>
+                <tbody id="productsTableBody">
+                  <!-- REST GET /api/products -->
+                </tbody>
+              </table>
+              <div class="pagination-bar">
+                <button id="btnPrevPage" class="btn btn-secondary">Previous</button>
+                <span id="paginationLabel">Page 1 of 1</span>
+                <button id="btnNextPage" class="btn btn-secondary">Next</button>
               </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <!-- 5. SCENARIO TESTER -->
-        <section id="view-scenarios" class="view-panel">
-          <div class="panel-header">
-            <div>
-              <h2>Scenario & Latency Stress Tester</h2>
-              <p>Verify that your UI handles slow networks, rate limits, and server crashes gracefully.</p>
+      <!-- Page 4: Order Register -->
+      <section id="view-orders" class="view-panel">
+        <div class="view-header justify-header">
+          <div>
+            <h1>Order Register</h1>
+            <p>System purchase transaction logging.</p>
+          </div>
+          <button id="btnCreateOrderModal" class="btn btn-primary">Create Test Order</button>
+        </div>
+
+        <div class="view-body">
+          <div class="card">
+            <div class="skeleton-loader" id="ordersSkeleton">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+            </div>
+            <div class="table-wrapper" id="ordersTableWrapper" style="display: none;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>User ID</th>
+                    <th>Revenue</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                  <!-- REST GET /api/orders -->
+                </tbody>
+              </table>
             </div>
           </div>
+        </div>
+      </section>
 
-          <div class="scenarios-grid">
-            <div class="test-card">
-              <h3>⏱️ Latency & Loading Skeletons</h3>
-              <p>Switch TrafficGhost to <strong>Slow Network</strong> in VS Code, then click reload:</p>
-              <button class="btn btn-primary" onclick="testLatency()">Trigger Fetch & Measure Latency</button>
-              <div class="test-result" id="latencyTestResult">Latency result will appear here.</div>
+      <!-- Page 5: System Metrics / Analytics -->
+      <section id="view-analytics" class="view-panel">
+        <div class="view-header">
+          <h1>System Metrics</h1>
+          <p>Historical system telemetry.</p>
+        </div>
+        <div class="view-body">
+          <div class="card">
+            <h2>API Telemetry Summary</h2>
+            <div class="skeleton-loader" id="analyticsSkeleton">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
             </div>
-
-            <div class="test-card">
-              <h3>🛑 Rate Limit (429) Handling</h3>
-              <p>Switch TrafficGhost to <strong>Rate Limited</strong> in VS Code and test error toast:</p>
-              <button class="btn btn-secondary" onclick="loadUsers()">Test 429 Error Trigger</button>
-            </div>
-
-            <div class="test-card">
-              <h3>💥 Server Crash (500) Handling</h3>
-              <p>Switch TrafficGhost to <strong>Server Error</strong> in VS Code to test retry mechanism:</p>
-              <button class="btn btn-secondary" onclick="loadProducts(1)">Test 500 Error Trigger</button>
+            <div id="analyticsWrapper" style="display: none;">
+              <div class="metrics-summary-box">
+                <div class="metric-row">
+                  <span>API Request Rate</span>
+                  <strong id="metricReqRate">0 req/sec</strong>
+                </div>
+                <div class="metric-row">
+                  <span>Avg Response Latency</span>
+                  <strong id="metricLatency">0 ms</strong>
+                </div>
+                <div class="metric-row">
+                  <span>Error Occurrence Rate</span>
+                  <strong id="metricErrorRate">0.0%</strong>
+                </div>
+              </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-      </main>
+      <!-- Page 6: Settings -->
+      <section id="view-settings" class="view-panel">
+        <div class="view-header">
+          <h1>Console Settings</h1>
+          <p>Adjust system layout preferences.</p>
+        </div>
+        <div class="view-body">
+          <div class="card">
+            <div class="form-group">
+              <label>API Endpoint Protocol Target</label>
+              <input type="text" id="settingEndpointTarget" class="input-text" value="http://localhost:4000">
+            </div>
+            <button id="btnSaveConsoleSettings" class="btn btn-primary">Apply Settings</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Create User Modal -->
+  <div class="modal" id="createUserModal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add Directory Member</h2>
+        <button class="btn-close" id="btnCancelCreateUser">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="newUserName" class="input-text" placeholder="e.g. John Doe">
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="newUserEmail" class="input-text" placeholder="e.g. john@nexus.com">
+        </div>
+        <div class="form-group">
+          <label>Access Level</label>
+          <select id="newUserRole" class="select-box">
+            <option value="Administrator">Administrator</option>
+            <option value="Operator">Operator</option>
+            <option value="Viewer">Viewer</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btnDismissCreateUser">Cancel</button>
+        <button class="btn btn-primary" id="btnSubmitCreateUser">Add Member</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Order Modal -->
+  <div class="modal" id="createOrderModal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Log Transaction</h2>
+        <button class="btn-close" id="btnCancelCreateOrder">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Account ID</label>
+          <input type="number" id="orderUserId" class="input-text" value="1">
+        </div>
+        <div class="form-group">
+          <label>Transaction Volume (USD)</label>
+          <input type="number" id="orderTotal" class="input-text" value="125.00">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btnDismissCreateOrder">Cancel</button>
+        <button class="btn btn-primary" id="btnSubmitCreateOrder">Create Order</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit User Modal (PUT workflow) -->
+  <div class="modal" id="editUserModal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Edit Directory Member</h2>
+        <button class="btn-close" id="btnCancelEditUser">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editUserId">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="editUserName" class="input-text">
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="editUserEmail" class="input-text">
+        </div>
+        <div class="form-group">
+          <label>Access Level</label>
+          <select id="editUserRole" class="select-box">
+            <option value="Administrator">Administrator</option>
+            <option value="Operator">Operator</option>
+            <option value="Viewer">Viewer</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btnDismissEditUser">Cancel</button>
+        <button class="btn btn-primary" id="btnSubmitEditUser">Save Changes</button>
+      </div>
     </div>
   </div>
 

@@ -59,3 +59,37 @@ export function redactHeaders(
   }
   return result;
 }
+
+export function detectSensitiveData(req: { headers: Record<string, string>; body?: any; response: { headers: Record<string, string>; body?: any } }): boolean {
+  const sensitiveKeys = ['authorization', 'cookie', 'set-cookie', 'x-api-key', 'apikey', 'password', 'token', 'secret'];
+  
+  // Check request headers
+  for (const k of Object.entries(req.headers)) {
+    if (sensitiveKeys.includes(k[0].toLowerCase())) return true;
+    if (k[1] === '[REDACTED]') return true;
+  }
+  
+  // Check response headers
+  for (const k of Object.entries(req.response.headers)) {
+    if (sensitiveKeys.includes(k[0].toLowerCase())) return true;
+    if (k[1] === '[REDACTED]') return true;
+  }
+
+  // Check request body keys
+  if (req.body && typeof req.body === 'object') {
+    const keys = Object.keys(req.body);
+    for (const k of keys) {
+      if (sensitiveKeys.some(sk => k.toLowerCase().includes(sk))) return true;
+    }
+  }
+
+  // Check response body keys
+  if (req.response.body && typeof req.response.body === 'object') {
+    const keys = Object.keys(req.response.body);
+    for (const k of keys) {
+      if (sensitiveKeys.some(sk => k.toLowerCase().includes(sk))) return true;
+    }
+  }
+
+  return false;
+}

@@ -11,11 +11,14 @@ export declare class TrafficGhostDashboardPanel {
     private readonly _panel;
     private readonly _extensionUri;
     private _disposables;
+    private disposed;
     static createOrShow(extensionUri: vscode.Uri, serverManager: ServerManager, recorder: BrowserRecorder, getCapturedRequests: () => CapturedRequest[], onAction: (action: string, data?: any) => Promise<void>): TrafficGhostDashboardPanel;
     private constructor();
     selectEndpoint(endpointId: string): void;
-    syncState(): void;
+    syncState(): Promise<void>;
+    private syncStateSafely;
     private handleWebviewMessage;
     private updateWebviewContent;
     dispose(): void;
+    private disposeListeners;
 }
