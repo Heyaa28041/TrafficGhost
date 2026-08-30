@@ -1,0 +1,222 @@
+[
+  {
+    "id": 1,
+    "name": "Nexus Enterprise Platform",
+    "price": 299.00,
+    "stock": 500,
+    "category": "Cloud Infrastructure",
+    "description": "Full-suite cloud orchestration and API monitoring platform with 99.99% SLA.",
+    "rating": 4.9,
+    "reviews": 128,
+    "sku": "NEX-PLT-ENT"
+  },
+  {
+    "id": 2,
+    "name": "API Gateway Accelerator",
+    "price": 99.00,
+    "stock": 250,
+    "category": "Developer Tools",
+    "description": "High-throughput edge routing layer with dynamic rate limiting and token bucket caching.",
+    "rating": 4.8,
+    "reviews": 94,
+    "sku": "NEX-GW-ACC"
+  },
+  {
+    "id": 3,
+    "name": "Single Sign-On (SSO) Connector",
+    "price": 149.00,
+    "stock": 300,
+    "category": "Security",
+    "description": "Enterprise SAML 2.0 & OIDC integration module for Okta, Azure AD, and Google Workspace.",
+    "rating": 4.7,
+    "reviews": 73,
+    "sku": "NEX-SEC-SSO"
+  },
+  {
+    "id": 4,
+    "name": "Cloud Storage 1TB Tier",
+    "price": 49.00,
+    "stock": 1000,
+    "category": "Cloud Infrastructure",
+    "description": "Encrypted multi-region object storage with automatic snapshot lifecycle policies.",
+    "rating": 4.6,
+    "reviews": 210,
+    "sku": "NEX-STR-1TB"
+  },
+  {
+    "id": 5,
+    "name": "Realtime Audit & Compliance Log",
+    "price": 199.00,
+    "stock": 150,
+    "category": "Security",
+    "description": "Immutable SOC2 and HIPAA compliant logging pipeline with automated alerts.",
+    "rating": 4.9,
+    "reviews": 61,
+    "sku": "NEX-AUD-SOC"
+  },
+  {
+    "id": 6,
+    "name": "AI Copilot Assistant Addon",
+    "price": 79.00,
+    "stock": 400,
+    "category": "AI & ML",
+    "description": "Intelligent automated query tuning and code generation assistant.",
+    "rating": 4.7,
+    "reviews": 182,
+    "sku": "NEX-AI-AST"
+  },
+  {
+    "id": 7,
+    "name": "Global CDN Accelerator",
+    "price": 89.00,
+    "stock": 200,
+    "category": "Cloud Infrastructure",
+    "description": "Edge caching across 280+ POPs worldwide with sub-20ms TTFB.",
+    "rating": 4.8,
+    "reviews": 115,
+    "sku": "NEX-CDN-ACC"
+  },
+  {
+    "id": 8,
+    "name": "Priority 24/7 Support Tier",
+    "price": 249.00,
+    "stock": 100,
+    "category": "Services",
+    "description": "Dedicated technical account manager with 15-minute response SLA.",
+    "rating": 5.0,
+    "reviews": 45,
+    "sku": "NEX-SUP-PRI"
+  },
+  {
+    "id": 9,
+    "name": "Database Replication Cluster",
+    "price": 179.00,
+    "stock": 80,
+    "category": "Cloud Infrastructure",
+    "description": "Zero-downtime multi-AZ read replicas with automatic failover.",
+    "rating": 4.6,
+    "reviews": 56,
+    "sku": "NEX-DB-REP"
+  },
+  {
+    "id": 10,
+    "name": "Nexus Dev Workspace Pro",
+    "price": 39.00,
+    "stock": 600,
+    "category": "Developer Tools",
+    "description": "Ephemeral cloud development environments with pre-configured toolchains.",
+    "rating": 4.8,
+    "reviews": 312,
+    "sku": "NEX-DEV-PRO"
+  },
+  {
+    "id": 11,
+    "name": "Vulnerability Scanner Agent",
+    "price": 129.00,
+    "stock": 180,
+    "category": "Security",
+    "description": "Continuous container and dependency CVE scanning with automated PR fixes.",
+    "rating": 4.7,
+    "reviews": 89,
+    "sku": "NEX-SEC-VUL"
+  },
+  {
+    "id": 12,
+    "name": "Predictive Load Balancer",
+    "price": 119.00,
+    "stock": 120,
+    "category": "Cloud Infrastructure",
+    "description": "ML-driven traffic sharding and proactive autoscaling controller.",
+    "rating": 4.5,
+    "reviews": 67,
+    "sku": "NEX-NET-PLB"
+  },
+  {
+    "id": 13,
+    "name": "Webhooks Automation Hub",
+    "price": 59.00,
+    "stock": 350,
+    "category": "Developer Tools",
+    "description": "Reliable event delivery with exponential backoff and replay debugger.",
+    "rating": 4.9,
+    "reviews": 140,
+    "sku": "NEX-EVT-WHK"
+  },
+  {
+    "id": 14,
+    "name": "Custom Domain SSL Manager",
+    "price": 29.00,
+    "stock": 800,
+    "category": "Security",
+    "description": "Automated wildcard certificate renewal and HSTS enforcement.",
+    "rating": 4.9,
+    "reviews": 420,
+    "sku": "NEX-SEC-SSL"
+  },
+  {
+    "id": 15,
+    "name": "GraphQL Federation Gateway",
+    "price": 159.00,
+    "stock": 140,
+    "category": "Developer Tools",
+    "description": "Unified supergraph router with distributed query planning.",
+    "rating": 4.8,
+    "reviews": 98,
+    "sku": "NEX-GQL-FED"
+  },
+  {
+    "id": 201,
+    "name": "Wireless Keyboard",
+    "price": 79.99,
+    "stock": 145,
+    "category": "Electronics",
+    "description": "Full-size wireless keyboard with 2.4GHz connectivity and 12-month battery life.",
+    "rating": 4.6,
+    "reviews": 328,
+    "sku": "HW-KB-WRL"
+  },
+  {
+    "id": 202,
+    "name": "USB-C Hub",
+    "price": 49.99,
+    "stock": 89,
+    "category": "Electronics",
+    "description": "7-in-1 USB-C hub with HDMI, USB 3.0, SD card, and 100W PD charging.",
+    "rating": 4.4,
+    "reviews": 512,
+    "sku": "HW-HUB-USBC"
+  },
+  {
+    "id": 203,
+    "name": "Ergonomic Mouse",
+    "price": 59.99,
+    "stock": 210,
+    "category": "Electronics",
+    "description": "Vertical ergonomic wireless mouse with silent clicks and thumb scroll.",
+    "rating": 4.7,
+    "reviews": 240,
+    "sku": "HW-MOU-ERG"
+  },
+  {
+    "id": 204,
+    "name": "Monitor Stand",
+    "price": 39.99,
+    "stock": 67,
+    "category": "Furniture",
+    "description": "Heavy-duty aluminum dual monitor riser with integrated cable routing.",
+    "rating": 4.5,
+    "reviews": 118,
+    "sku": "HW-MON-STD"
+  },
+  {
+    "id": 205,
+    "name": "Webcam HD",
+    "price": 89.99,
+    "stock": 130,
+    "category": "Electronics",
+    "description": "4K Ultra HD streaming camera with dual noise-canceling microphones.",
+    "rating": 4.8,
+    "reviews": 405,
+    "sku": "HW-CAM-4K"
+  }
+]
