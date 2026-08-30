@@ -1,0 +1,167 @@
+[
+  {
+    "id": 1,
+    "userId": 1,
+    "title": "Deployment Successful",
+    "message": "Production build v2.4.1 deployed to us-east-1 cluster with 0 errors.",
+    "type": "system",
+    "severity": "success",
+    "read": false,
+    "actionUrl": "/deployments/prod-241",
+    "createdAt": "2024-06-01T11:55:00Z"
+  },
+  {
+    "id": 2,
+    "userId": 1,
+    "title": "High API Traffic Alert",
+    "message": "Traffic spike detected on /api/products route (+240% over baseline).",
+    "type": "alert",
+    "severity": "warning",
+    "read": false,
+    "actionUrl": "/monitoring/traffic",
+    "createdAt": "2024-06-01T11:30:00Z"
+  },
+  {
+    "id": 3,
+    "userId": 2,
+    "title": "SSL Certificate Renewal",
+    "message": "Wildcard certificate for *.nexus.test automatically renewed for 90 days.",
+    "type": "security",
+    "severity": "info",
+    "read": true,
+    "actionUrl": "/settings/security",
+    "createdAt": "2024-06-01T10:15:00Z"
+  },
+  {
+    "id": 4,
+    "userId": 3,
+    "title": "Invoice Generated",
+    "message": "Monthly billing statement for May 2024 is ready for download ($1,420.00).",
+    "type": "billing",
+    "severity": "info",
+    "read": false,
+    "actionUrl": "/billing/invoices/2024-05",
+    "createdAt": "2024-06-01T09:00:00Z"
+  },
+  {
+    "id": 5,
+    "userId": 4,
+    "title": "Cluster Autoscaled",
+    "message": "Kubernetes worker pool scaled up from 4 to 8 nodes in response to load.",
+    "type": "system",
+    "severity": "info",
+    "read": true,
+    "actionUrl": "/infrastructure/clusters",
+    "createdAt": "2024-06-01T08:45:00Z"
+  },
+  {
+    "id": 6,
+    "userId": 5,
+    "title": "New Team Member Invited",
+    "message": "Invitation sent to elena@nexus.test with Product Manager role.",
+    "type": "team",
+    "severity": "info",
+    "read": true,
+    "actionUrl": "/team/invitations",
+    "createdAt": "2024-05-31T16:20:00Z"
+  },
+  {
+    "id": 7,
+    "userId": 1,
+    "title": "Webhook Delivery Failure",
+    "message": "Endpoint https://hooks.client.io/events failed after 3 retries (504 Gateway Timeout).",
+    "type": "alert",
+    "severity": "error",
+    "read": false,
+    "actionUrl": "/webhooks/logs/wh-992",
+    "createdAt": "2024-05-31T14:10:00Z"
+  },
+  {
+    "id": 8,
+    "userId": 2,
+    "title": "Storage Quota Warning",
+    "message": "Database backup storage reached 82% capacity limit (820GB of 1TB).",
+    "type": "system",
+    "severity": "warning",
+    "read": true,
+    "actionUrl": "/storage/quotas",
+    "createdAt": "2024-05-31T12:00:00Z"
+  },
+  {
+    "id": 9,
+    "userId": 3,
+    "title": "Security Policy Update",
+    "message": "Mandatory 2FA policy enforced for all Organization Administrators.",
+    "type": "security",
+    "severity": "warning",
+    "read": false,
+    "actionUrl": "/security/policies",
+    "createdAt": "2024-05-30T17:30:00Z"
+  },
+  {
+    "id": 10,
+    "userId": 4,
+    "title": "API Key Rotated",
+    "message": "Production API key 'pk_live_nexus_998a' successfully rotated by admin@nexus.test.",
+    "type": "security",
+    "severity": "info",
+    "read": true,
+    "actionUrl": "/developers/api-keys",
+    "createdAt": "2024-05-30T15:00:00Z"
+  },
+  {
+    "id": 11,
+    "userId": 5,
+    "title": "Database Optimization Completed",
+    "message": "Index vacuum and query plan re-indexing finished in 14.2 seconds.",
+    "type": "system",
+    "severity": "success",
+    "read": true,
+    "actionUrl": "/database/maintenance",
+    "createdAt": "2024-05-29T23:00:00Z"
+  },
+  {
+    "id": 12,
+    "userId": 1,
+    "title": "Payment Succeeded",
+    "message": "Order #1006 ($248.00) processed successfully via Stripe.",
+    "type": "billing",
+    "severity": "success",
+    "read": true,
+    "actionUrl": "/orders/ORD-006",
+    "createdAt": "2024-05-29T13:42:00Z"
+  },
+  {
+    "id": 13,
+    "userId": 2,
+    "title": "Rate Limit Threshold Exceeded",
+    "message": "IP 198.51.100.42 exceeded 500 req/min threshold and was throttled.",
+    "type": "security",
+    "severity": "warning",
+    "read": false,
+    "actionUrl": "/security/waf",
+    "createdAt": "2024-05-28T18:22:00Z"
+  },
+  {
+    "id": 14,
+    "userId": 3,
+    "title": "Scheduled Maintenance Window",
+    "message": "Scheduled database maintenance on Sunday June 9 from 02:00 to 04:00 UTC.",
+    "type": "system",
+    "severity": "info",
+    "read": false,
+    "actionUrl": "/status/maintenance/2024-06",
+    "createdAt": "2024-05-28T10:00:00Z"
+  },
+  {
+    "id": 15,
+    "userId": 4,
+    "title": "GraphQL Schema Updated",
+    "message": "Schema version v1.9.0 published with new Mutation types for BatchUserSync.",
+    "type": "system",
+    "severity": "info",
+    "read": true,
+    "actionUrl": "/developers/graphql",
+    "createdAt": "2024-05-27T16:45:00Z"
+  }
+]

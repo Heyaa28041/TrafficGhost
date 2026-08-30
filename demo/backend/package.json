@@ -1,0 +1,24 @@
+{
+  "name": "nexus-mock-backend",
+  "version": "1.0.0",
+  "description": "Realistic SaaS API Mock Backend for TrafficGhost demo & verification",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "graphql": "^16.8.1"
+  },
+  "keywords": [
+    "trafficghost",
+    "mock",
+    "saas-api",
+    "nexus",
+    "graphql"
+  ],
+  "author": "TrafficGhost Team",
+  "license": "Apache-2.0"
+}
