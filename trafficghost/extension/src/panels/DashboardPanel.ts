@@ -65,6 +65,9 @@ export class DashboardPanel {
     path?: string;
     method?: string;
     body?: string;
+    // Exasol AI
+    question?: string;
+    apiKey?: string;
   }): Promise<void> {
     switch (msg.command) {
       case "setBehavior": {
@@ -113,6 +116,49 @@ export class DashboardPanel {
         if (msg.path) {
           await vscode.env.clipboard.writeText(msg.path);
           vscode.window.showInformationMessage(`Copied: ${msg.path}`);
+        }
+        break;
+      }
+      // ── Exasol AI ──────────────────────────────────────────────────────────
+      case "exasolStatus": {
+        try {
+          const status = await this.client.getExasolStatus();
+          this.panel.webview.postMessage({ type: "exasolStatus", ...status });
+        } catch {
+          this.panel.webview.postMessage({ type: "exasolStatus", connected: false });
+        }
+        break;
+      }
+      case "aiQuery": {
+        if (!msg.question) break;
+        this.panel.webview.postMessage({ type: "aiLoading", loading: true });
+        try {
+          const result = await this.client.aiQuery(msg.question, msg.apiKey);
+          this.panel.webview.postMessage({ type: "aiResult", ...result });
+        } catch (e) {
+          this.panel.webview.postMessage({
+            type: "aiResult",
+            question: msg.question,
+            sql: "",
+            columns: [],
+            rows: [],
+            error: (e as Error).message,
+            durationMs: 0,
+          });
+        } finally {
+          this.panel.webview.postMessage({ type: "aiLoading", loading: false });
+        }
+        break;
+      }
+      case "syncExasol": {
+        try {
+          const result = await this.client.syncToExasol();
+          this.panel.webview.postMessage({ type: "syncResult", ...result });
+          // Refresh status after sync
+          const status = await this.client.getExasolStatus();
+          this.panel.webview.postMessage({ type: "exasolStatus", ...status });
+        } catch (e) {
+          this.panel.webview.postMessage({ type: "syncResult", ok: false, error: (e as Error).message });
         }
         break;
       }
@@ -645,6 +691,40 @@ body {
         <div id="test-result" class="test-result" style="display:none"></div>
       </div>
     </div>
+
+    <!-- Exasol AI -->
+    <hr class="section-sep">
+    <div class="control-section">
+      <div class="control-label" style="display:flex;align-items:center;justify-content:space-between">
+        <span>🤖 Exasol AI Analytics</span>
+        <span id="exasol-badge" class="badge-dyn" style="background:rgba(0,180,216,0.15);color:#00b4d8;border:1px solid rgba(0,180,216,0.3);font-size:9px">Checking...</span>
+      </div>
+      <div style="font-size:10px;color:var(--fg2);margin-bottom:6px">Ask natural language questions about your API traffic using Exasol AI:</div>
+      
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <input id="ai-input" type="text" placeholder="e.g. Which endpoints had errors?"
+          style="flex:1;background:var(--bg);color:var(--fg);border:1px solid var(--border);border-radius:4px;padding:5px;font-size:11px"
+          onkeydown="if(event.key==='Enter') askExasol()">
+        <button class="preset-btn" style="background:var(--accent);color:#fff;font-weight:600" onclick="askExasol()">Ask</button>
+      </div>
+
+      <div class="presets" style="margin-bottom:6px">
+        <span class="preset-btn" onclick="askExasol('Which endpoints had errors?')">❌ Errors</span>
+        <span class="preset-btn" onclick="askExasol('What is the average response latency?')">⏱ Latency</span>
+        <span class="preset-btn" onclick="askExasol('Which endpoint is most called?')">🔥 Popular</span>
+        <span class="preset-btn" onclick="askExasol('List status code breakdown')">📊 Status</span>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        <button class="preset-btn" style="font-size:10px" onclick="syncExasol()">🔄 Sync Traffic to Exasol</button>
+        <span id="sync-msg" style="font-size:10px;color:var(--fg2)"></span>
+      </div>
+
+      <div id="ai-result-area" style="display:none;margin-top:8px;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:11px">
+        <div id="ai-loading" style="display:none;color:var(--accent);font-weight:600">⚡ Exasol AI generating & running SQL query...</div>
+        <div id="ai-output"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -818,6 +898,28 @@ function testEndpoint() {
   vscode.postMessage({ command: 'testEndpoint', method, path });
 }
 
+// ─── Exasol AI Functions ───────────────────────────────────────────────────
+
+function checkExasolStatus() {
+  vscode.postMessage({ command: 'exasolStatus' });
+}
+setTimeout(checkExasolStatus, 1000);
+
+function askExasol(query) {
+  const q = query || document.getElementById('ai-input').value.trim();
+  if (!q) return;
+  document.getElementById('ai-input').value = q;
+  document.getElementById('ai-result-area').style.display = 'block';
+  document.getElementById('ai-loading').style.display = 'block';
+  document.getElementById('ai-output').innerHTML = '';
+  vscode.postMessage({ command: 'aiQuery', question: q });
+}
+
+function syncExasol() {
+  document.getElementById('sync-msg').textContent = 'Syncing...';
+  vscode.postMessage({ command: 'syncExasol' });
+}
+
 // ─── Utils ────────────────────────────────────────────────────────────────
 
 function copyUrl() {
@@ -838,10 +940,6 @@ window.addEventListener('message', event => {
   const msg = event.data;
   if (msg.type === 'update') {
     renderAll(msg.project, msg.mockStatus, msg.logs);
-    if (msg.project?.endpointCount > 0) {
-      // fetch detailed endpoints via control API directly
-      // (already populated from extension push)
-    }
   }
   if (msg.type === 'endpoints') {
     renderEndpoints(msg.endpoints);

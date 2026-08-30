@@ -83,6 +83,36 @@
           "type": "number",
           "default": 7777,
           "description": "Port for the HTTP proxy capture server."
+        },
+        "trafficghost.exasol.host": {
+          "type": "string",
+          "default": "localhost",
+          "description": "Exasol Personal database host."
+        },
+        "trafficghost.exasol.port": {
+          "type": "number",
+          "default": 8563,
+          "description": "Exasol WebSocket API port."
+        },
+        "trafficghost.exasol.user": {
+          "type": "string",
+          "default": "sys",
+          "description": "Exasol database username."
+        },
+        "trafficghost.exasol.password": {
+          "type": "string",
+          "default": "exasol",
+          "description": "Exasol database password."
+        },
+        "trafficghost.exasol.schema": {
+          "type": "string",
+          "default": "TRAFFICGHOST",
+          "description": "Exasol target schema for TrafficGhost analytics."
+        },
+        "trafficghost.exasol.aiApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Optional API key for LLM-powered natural language SQL generation."
         }
       }
     }
